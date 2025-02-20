@@ -10,7 +10,7 @@ function App() {
     const [error, setError] = useState(null);
     const [nextPageToken, setNextPageToken] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const API_KEY = "AIzaSyBIVmZBjw0SThgCoZKoetme2-DJg0xIh1k";
+    const API_KEY = "AIzaSyCPq240vMorvQpPN4qOlYFjrgGHkyQVLcE";
 
 
     async function fetchVideos(pageToken = "") {
