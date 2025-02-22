@@ -2,16 +2,16 @@ import React, { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
 
-// Register chart elements
+
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function App() {
     const [product, setProduct] = useState("");
     const [consume, setConsume] = useState("");
     const [inhand, setInhand] = useState("");
-    const [quantity, setQuantity] = useState(""); 
+    const [quantity, setQuantity] = useState("");
     const [todos, setTodos] = useState([]);
-    const [selectedProduct, setSelectedProduct] = useState(null); 
+    const [selectedProduct, setSelectedProduct] = useState(null);
     const appUrl = "http://localhost:8000";
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -19,11 +19,7 @@ export default function App() {
     const [editProduct, setEditProduct] = useState("");
     const [editConsume, setEditConsume] = useState("");
     const [editInhand, setEditInhand] = useState("");
-    const [editQuantity, setEditQuantity] = useState(""); 
-    const [originalProduct, setOriginalProduct] = useState("");
-    const [originalConsume, setOriginalConsume] = useState("");
-    const [originalInhand, setOriginalInhand] = useState("");
-    const [originalQuantity, setOriginalQuantity] = useState("");
+    const [editQuantity, setEditQuantity] = useState("");
 
     useEffect(() => {
         getItems();
@@ -39,9 +35,20 @@ export default function App() {
             });
     };
 
+
     const handleSubmit = () => {
-        setError(""); 
-        if (product.trim() !== "" && consume.trim() !== "" && inhand.trim() !== "" && quantity.trim() !== "") {
+        setError("");
+        if (
+            product.trim() !== "" &&
+            consume.trim() !== "" &&
+            (typeof inhand === 'string' ? inhand.trim() !== "" : inhand !== "") &&
+            quantity.trim() !== ""
+          ) {
+            if (parseInt(consume) > parseInt(quantity)) {
+                setError("Consumed value cannot be greater than Quantity.");
+                return;
+            }
+
             fetch(appUrl + "/todos", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -72,10 +79,6 @@ export default function App() {
         setEditQuantity(item.quantity);
         setEditConsume(item.consume);
         setEditInhand(item.inhand);
-        setOriginalProduct(item.product);
-        setOriginalQuantity(item.quantity);
-        setOriginalConsume(item.consume);
-        setOriginalInhand(item.inhand);
     };
 
     const handleEditCancel = () => {
@@ -87,14 +90,24 @@ export default function App() {
     };
 
     const handleUpdate = () => {
-        setError(""); 
+        setError("");
         const updatedFields = {};
-        if (editProduct.trim() !== originalProduct) updatedFields.product = editProduct;
-        if (editQuantity.toString().trim() !== originalQuantity.toString()) updatedFields.quantity = editQuantity;
-        if (editConsume.toString().trim() !== originalConsume.toString()) updatedFields.consume = editConsume;
-        if (editInhand.toString().trim() !== originalInhand.toString()) updatedFields.inhand = editInhand;
+        if (editProduct.trim()) updatedFields.product = editProduct;
+        if (editQuantity.toString().trim()) updatedFields.quantity = editQuantity;
+        if (editConsume.toString().trim()) updatedFields.consume = editConsume;
+        if (editInhand.toString().trim()) updatedFields.inhand = editInhand;
 
         if (Object.keys(updatedFields).length > 0) {
+            if (editProduct.trim() === "" || editQuantity.toString().trim() === "" || editConsume.toString().trim() === "" || editInhand.toString().trim() === "") {
+                setError("Please fill in all fields.");
+                return;
+            }
+
+            if (parseInt(editConsume) > parseInt(editQuantity)) {
+                setError("Consumed value cannot be greater than Quantity.");
+                return;
+            }
+
             fetch(appUrl + "/todos/" + editId, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
@@ -102,7 +115,7 @@ export default function App() {
             })
                 .then((res) => res.json())
                 .then(() => {
-                    setTodos(todos.map((item) => 
+                    setTodos(todos.map((item) =>
                         item._id === editId
                             ? { ...item, ...updatedFields }
                             : item
@@ -126,7 +139,7 @@ export default function App() {
                 .then(() => {
                     setTodos(todos.filter((item) => item._id !== id));
                     if (selectedProduct && selectedProduct._id === id) {
-                        setSelectedProduct(null);  
+                        setSelectedProduct(null);
                     }
                 })
                 .catch((err) => {
@@ -138,6 +151,42 @@ export default function App() {
 
     const handleViewChart = (item) => {
         setSelectedProduct(item);
+    };
+
+    const handleQuantityChange = (e) => {
+        const newQuantity = e.target.value;
+        setQuantity(newQuantity);
+        if (newQuantity && consume) {
+            const newInhand = newQuantity - consume;
+            setInhand(newInhand);
+        }
+    };
+
+    const handleConsumeChange = (e) => {
+        const newConsume = e.target.value;
+        setConsume(newConsume);
+        if (quantity && newConsume) {
+            const newInhand = quantity - newConsume;
+            setInhand(newInhand);
+        }
+    };
+
+    const handleEditQuantityChange = (e) => {
+        const newQuantity = e.target.value;
+        setEditQuantity(newQuantity);
+        if (newQuantity && editConsume) {
+            const newInhand = newQuantity - editConsume;
+            setEditInhand(newInhand);
+        }
+    };
+
+    const handleEditConsumeChange = (e) => {
+        const newConsume = e.target.value;
+        setEditConsume(newConsume);
+        if (editQuantity && newConsume) {
+            const newInhand = editQuantity - newConsume;
+            setEditInhand(newInhand);
+        }
     };
 
     const chartData = selectedProduct ? {
@@ -179,32 +228,34 @@ export default function App() {
                     <div className="form-group d-flex gap-2">
                         <input
                             placeholder="Product Name"
-                            className="form-control"
+                            className="form-control mb-2"
                             onChange={(e) => setProduct(e.target.value)}
                             value={product}
                         />
                         <input
                             placeholder="Quantity"
-                            className="form-control"
+                            className="form-control mb-2"
                             type="number"
-                            onChange={(e) => setQuantity(e.target.value)}
+                            onChange={handleQuantityChange}
                             value={quantity}
                         />
+
                         <input
                             placeholder="Consumed"
-                            className="form-control"
+                            className="form-control mb-2"
                             type="number"
-                            onChange={(e) => setConsume(e.target.value)}
+                            onChange={handleConsumeChange}
                             value={consume}
                         />
+
                         <input
                             placeholder="In-Hand"
-                            className="form-control"
+                            className="form-control mb-2"
                             type="number"
-                            onChange={(e) => setInhand(e.target.value)}
                             value={inhand}
+                            readOnly
                         />
-                        <button onClick={handleSubmit} className="btn btn-success">Add Product</button>
+                        <button onClick={handleSubmit} className="btn btn-success mb-2">Add Product</button>
                     </div>
                     {error && <p className="text-danger">{error}</p>}
                 </div>
@@ -229,24 +280,24 @@ export default function App() {
                                                     placeholder="Quantity"
                                                     className="form-control mb-2"
                                                     type="number"
-                                                    onChange={(e) => setEditQuantity(e.target.value)}
+                                                    onChange={handleEditQuantityChange}
                                                     value={editQuantity}
                                                 />
                                                 <input
                                                     placeholder="Consumed"
                                                     className="form-control mb-2"
                                                     type="number"
-                                                    onChange={(e) => setEditConsume(e.target.value)}
+                                                    onChange={handleEditConsumeChange}
                                                     value={editConsume}
                                                 />
                                                 <input
                                                     placeholder="In-Hand"
                                                     className="form-control mb-2"
                                                     type="number"
-                                                    onChange={(e) => setEditInhand(e.target.value)}
                                                     value={editInhand}
+                                                    readOnly
                                                 />
-                                                <button className="btn btn-success" onClick={handleUpdate}>
+                                                <button className="btn btn-success m-2" onClick={handleUpdate}>
                                                     Update
                                                 </button>
                                                 <button className="btn btn-secondary" onClick={handleEditCancel}>
@@ -258,7 +309,7 @@ export default function App() {
                                                 <h5 className="card-title">{item.product}</h5>
                                                 <p className="card-text">Quantity: {item.quantity}</p>
                                                 <p className="card-text">Consumed: {item.consume}</p>
-                                                <p className="card-text">In Hand: {item.inhand}</p>
+                                                <p className="card-text">In Hand : {item.inhand}</p>
                                                 <button className="btn btn-primary" onClick={() => handleEdit(item)}>
                                                     Edit
                                                 </button>
@@ -283,7 +334,7 @@ export default function App() {
                         <div style={{ maxWidth: "800px", margin: "0 auto" }}>
                             <Bar data={chartData} />
                         </div>
-                    </div>
+                    </div>  
                 )}
             </div>
         </>
