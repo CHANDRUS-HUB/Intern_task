@@ -43,7 +43,7 @@ export default function App() {
             consume.trim() !== "" &&
             (typeof inhand === 'string' ? inhand.trim() !== "" : inhand !== "") &&
             quantity.trim() !== ""
-          ) {
+        ) {
             if (parseInt(consume) > parseInt(quantity)) {
                 setError("Consumed value cannot be greater than Quantity.");
                 return;
@@ -334,7 +334,7 @@ export default function App() {
                         <div style={{ maxWidth: "800px", margin: "0 auto" }}>
                             <Bar data={chartData} />
                         </div>
-                    </div>  
+                    </div>
                 )}
             </div>
         </>
