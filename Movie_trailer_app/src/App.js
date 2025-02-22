@@ -135,7 +135,7 @@ function App() {
                 )}
 
                 {videoList.length > 0 && nextPageToken && (
-                    <div className="navigation-buttons">
+                    <div className="navigation-buttons glyphicon glyphicon-heart">
                         <button className="next-btn" onClick={handleNextPage} disabled={isLoading}>
                             {isLoading ? "Loading..." : "Next Videos"}
                         </button>
