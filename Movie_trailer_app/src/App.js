@@ -6,12 +6,11 @@ import axios from 'axios';
 function App() {
     const [video, setVideo] = useState("");
     const [videoList, setVideoList] = useState([]);
-    const [previousVideoList, setPreviousVideoList] = useState([]);
+    const [pageHistory, setPageHistory] = useState([]); 
     const [error, setError] = useState(null);
     const [nextPageToken, setNextPageToken] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const API_KEY = "AIzaSyCPq240vMorvQpPN4qOlYFjrgGHkyQVLcE";
-
 
     async function fetchVideos(pageToken = "") {
         setIsLoading(true);
@@ -40,7 +39,7 @@ function App() {
                 }).filter(Boolean);
 
                 if (videos.length > 0) {
-                    setPreviousVideoList(videoList);
+                    setPageHistory(prevHistory => [...prevHistory, { videos, nextPageToken: res.data.nextPageToken }]);
                     setVideoList(videos);
                     setNextPageToken(res.data.nextPageToken || "");
                     setError(null);
@@ -65,22 +64,25 @@ function App() {
         if (!video.trim()) {
             setError("Please enter a movie name.");
             setVideoList([]);
-            setPreviousVideoList([]);
+            setPageHistory([]);
+            setNextPageToken("");
             return;
         }
         fetchVideos();
     }
 
-    async function handleNextPage() {
+    function handleNextPage() {
         if (nextPageToken) {
             fetchVideos(nextPageToken);
         }
     }
 
     function handlePreviousPage() {
-        if (previousVideoList.length > 0) {
-            setVideoList(previousVideoList);
-            setPreviousVideoList([]);
+        if (pageHistory.length >= 1) {
+            const previousPage = pageHistory[pageHistory.length - 2];
+            setVideoList(previousPage.videos);
+            setNextPageToken(previousPage.nextPageToken );
+            setPageHistory(prevHistory => prevHistory.slice(0, -1)); 
         }
     }
 
@@ -124,7 +126,7 @@ function App() {
                     </div>
                 )}
 
-                {videoList.length > 0 && previousVideoList.length > 0 && (
+                {videoList.length > 0 && pageHistory.length > 1 && (
                     <div className="navigation-buttons">
                         <button className="previous-btn" onClick={handlePreviousPage} disabled={isLoading}>
                             {isLoading ? "Loading..." : "Previous Videos"}
