@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { baseurl } from "../URL/url";
 
 function AddProduct() {
   const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(""); // ✅ Fix: Define setSelectedCategory
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [products, setProducts] = useState([]); // ✅ Track all products
   const [product, setProduct] = useState({
     name: "",
     category: "",
@@ -14,62 +16,91 @@ function AddProduct() {
     in_hand_stock: "",
   });
 
+  // ✅ Ensure useEffect runs only once
+  const isFirstRender = useRef(true);
+
   useEffect(() => {
-    const fetchCategories = () => {
-      axios.get("http://localhost:5000/categories")
-        .then((res) => setCategories(res.data))
-        .catch((err) => console.error(err));
-    };
-
-    fetchCategories();
-    window.addEventListener("categoriesUpdated", fetchCategories);
-
-    return () => {
-      window.removeEventListener("categoriesUpdated", fetchCategories);
-    };
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      fetchCategories();
+      fetchProducts();
+    }
   }, []);
+
+  // ✅ Fetch Categories
+  const fetchCategories = async () => {
+    try {
+      const res = await axios.get(`${baseurl}/categories`);
+      setCategories(res.data);
+    } catch (err) {
+      console.error("Error fetching categories:", err);
+    }
+  };
+
+  // ✅ Fetch Products & Remove Duplicates
+  const fetchProducts = async () => {
+    try {
+      const res = await axios.get(`${baseurl}/products`);
+      console.log("Fetched Products:", res.data);
+
+      // Remove duplicates before setting state
+      const uniqueProducts = res.data.filter(
+        (value, index, self) => index === self.findIndex((p) => p.id === value.id)
+      );
+
+      setProducts(uniqueProducts);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  };
+
+  // ✅ Handle Input Change
   const handleChange = async (e) => {
     const { name, value } = e.target;
 
     setProduct((prev) => {
-        const updatedProduct = { ...prev, [name]: value };
+      const updatedProduct = { ...prev, [name]: value };
 
-        if (name === "name" && value.trim() !== "") {
-            // Check if the product exists in DB
-            axios.get(`http://localhost:5000/product/${value}`)
-                .then((res) => {
-                    if (res.data) {
-                        setProduct((prev) => ({
-                            ...prev,
-                            old_stock: res.data.in_hand_stock, // Auto-fill old stock
-                        }));
-                    } else {
-                        setProduct((prev) => ({
-                            ...prev,
-                            old_stock: 0, // If product doesn't exist, set old stock to 0
-                        }));
-                    }
-                })
-                .catch((err) => console.error(err));
-        }
+      if (name === "name" && value.trim() !== "") {
+        axios.get(`${baseurl}/product/${value}`)
+          .then((res) => {
+            const existingProduct = res.data;
+            setProduct((prev) => ({
+              ...prev,
+              old_stock: existingProduct ? Number(existingProduct.in_hand_stock) : 0,
+            }));
+          })
+          .catch((err) => console.error(err));
+      }
 
-        // ✅ Auto-calculate In-Hand Stock
-        if (name === "quantity" || name === "consumed") {
-            updatedProduct.in_hand_stock = (Number(updatedProduct.quantity) || 0) - (Number(updatedProduct.consumed) || 0);
-        }
+      // ✅ Auto-calculate In-Hand Stock
+      if (name === "quantity" || name === "consumed") {
+        updatedProduct.in_hand_stock =
+          (Number(updatedProduct.old_stock) || 0) +
+          (Number(updatedProduct.quantity) || 0) -
+          (Number(updatedProduct.consumed) || 0);
+      }
 
-        return updatedProduct;
+      return updatedProduct;
     });
-};
+  };
 
-
+  // ✅ Handle Category Selection
   const handleCategoryChange = (e) => {
     setSelectedCategory(e.target.value);
     setProduct((prev) => ({ ...prev, category: e.target.value }));
   };
 
+  // ✅ Prevent Duplicate Product Addition
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Check if the product already exists
+    const existingProduct = products.find((p) => p.name.toLowerCase() === product.name.toLowerCase());
+    if (existingProduct) {
+      alert("This product already exists!");
+      return;
+    }
 
     const formattedProduct = {
       ...product,
@@ -80,7 +111,7 @@ function AddProduct() {
     };
 
     try {
-      const response = await axios.post("http://localhost:5000/add-product", formattedProduct);
+      const response = await axios.post(`${baseurl}/add-product`, formattedProduct);
 
       if (response.data.updated) {
         alert("Stock updated for existing product!");
@@ -88,7 +119,10 @@ function AddProduct() {
         alert("Product added successfully!");
       }
 
-      // ✅ Fix: Reset selectedCategory after submit
+      // ✅ Refresh product list
+      fetchProducts();
+
+      // ✅ Reset form
       setSelectedCategory("");
       setProduct({
         name: "",
@@ -138,7 +172,7 @@ function AddProduct() {
         <input type="number" name="old_stock" placeholder="Old Stock" value={product.old_stock} onChange={handleChange} className="w-full p-2 border rounded" />
         <input type="number" name="quantity" placeholder="Quantity" value={product.quantity} onChange={handleChange} className="w-full p-2 border rounded" />
         <input type="number" name="consumed" placeholder="Consumed" value={product.consumed} onChange={handleChange} className="w-full p-2 border rounded" />
-        
+
         {/* ✅ Auto-calculated In-Hand Stock */}
         <input type="number" name="in_hand_stock" placeholder="In-Hand Stock" value={product.in_hand_stock} className="w-full p-2 border rounded bg-gray-100 cursor-not-allowed" disabled />
 

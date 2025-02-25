@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-
+import { baseurl } from "../URL/url";
 function Categories() {
   const [categories, setCategories] = useState([]);
   const [name, setName] = useState("");
@@ -12,10 +12,10 @@ function Categories() {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/categories"); // ✅ Fixed API URL
+      const res = await axios.get(`${baseurl}/categories`);
       setCategories(res.data);
     } catch (error) {
-      console.error("❌ Failed to fetch categories:", error.response?.data || error.message);
+      console.error(" Failed to fetch categories:", error.response?.data || error.message);
     }
   };
 
@@ -23,8 +23,8 @@ function Categories() {
     e.preventDefault();
     try {
       const url = editing
-        ? `http://localhost:5000/categories/${editing.id}`
-        : "http://localhost:5000/categories";
+        ? `${baseurl}/categories/${editing.id}`
+        : `${baseurl}/categories`;
 
       const method = editing ? "put" : "post";
 
@@ -48,7 +48,7 @@ function Categories() {
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this category?")) {
-      await axios.delete(`http://localhost:5000/categories/${id}`);
+      await axios.delete(`${baseurl}/categories/${id}`);
       fetchCategories();
       
       // ✅ Notify AddProduct.js to refresh categories after deletion
@@ -92,7 +92,7 @@ function Categories() {
                 </button>
                 <button
                   onClick={() => handleDelete(category.id)}
-                  className="p-1 bg-red-500 text-white rounded"
+                  className="p-1 mr-2 bg-red-500 text-white rounded"
                 >
                   Delete
                 </button>

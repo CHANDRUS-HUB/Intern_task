@@ -1,5 +1,5 @@
 const express = require("express");
-const mysql = require("mysql2"); // ✅ Import MySQL
+const mysql = require("mysql2");
 const cors = require("cors");
 require("dotenv").config();
 const moment = require("moment");
@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ Create a MySQL connection pool
+
 const db = mysql.createPool({
   host: "localhost",
   user: "newuser",
@@ -17,82 +17,105 @@ const db = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-}).promise(); // ✅ Promisify the connection pool
+}).promise();
 
-// ✅ Test database connection properly
+
 async function testDBConnection() {
   try {
     const connection = await db.getConnection();
-    console.log("✅ Database connected successfully!");
-    connection.release(); // Release the connection back to the pool
+    console.log("Database connected successfully!");
+    connection.release();
   } catch (err) {
-    console.error("❌ Database connection failed:", err);
+    console.error(" Database connection failed:", err);
   }
 }
 
 testDBConnection();
 
-// ✅ Fetch all products with category names
+
 app.get("/products", async (req, res) => {
   try {
     const [products] = await db.query(`
-      SELECT p.id, p.name, c.name AS category_name, p.in_hand_stock
+      SELECT p.id, p.name, c.name AS category_name, 
+             DATE_FORMAT(p.date, '%Y-%m-%d') AS date, 
+             p.old_stock, p.quantity, p.consumed, p.in_hand_stock
       FROM products p
       JOIN categories c ON p.category = c.id
+      ORDER BY p.date DESC
     `);
     res.json(products);
   } catch (err) {
-    res.status(500).json({ error: "Internal Server Error", details: err });
+    console.error("Database Error:", err);
+    res.status(500).json({ error: "Internal Server Error", details: err.message });
   }
 });
 
-// ✅ Fetch all categories
+
 app.get("/categories", async (req, res) => {
   try {
     const [categories] = await db.query("SELECT * FROM categories");
     res.json(categories);
   } catch (error) {
-    console.error(error);
+    console.error("Database Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 app.post("/add-product", async (req, res) => {
-  const { name, category, date, old_stock, quantity, consumed } = req.body;
-
   try {
-    // Check if the product already exists
-    const [existingProduct] = await db.query("SELECT * FROM products WHERE name = ?", [name]);
+    const { name, category, date, quantity, consumed } = req.body;
 
-    let oldStock = old_stock || 0;
-
-    if (existingProduct.length > 0) {
-      // If product exists, update old_stock
-      oldStock = existingProduct[0].in_hand_stock;
-
-      await db.query(
-        "UPDATE products SET old_stock = ?, quantity = ?, consumed = ?, date = ? WHERE name = ?",
-        [oldStock, quantity, consumed, date, name] // ✅ Removed in_hand_stock
-      );
-
-      return res.json({ updated: true, message: "Product stock updated!", oldStock });
-    } else {
-      // If product doesn't exist, insert as new
-      await db.query(
-        "INSERT INTO products (name, category, date, old_stock, quantity, consumed) VALUES (?, ?, ?, ?, ?, ?)",
-        [name, category, date, oldStock, quantity, consumed] // ✅ Removed in_hand_stock
-      );
-
-      return res.json({ added: true, message: "Product added successfully!" });
+  
+    if (!name || !category || !date) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
+
+    let categoryId = Number(category);
+    let parsedQuantity = parseInt(quantity) || 0;
+    let parsedConsumed = parseInt(consumed) || 0;
+    let formattedDate = moment(date, "YYYY-MM-DD").format("YYYY-MM-DD");
+
+    console.log("Received Data:", { name, categoryId, formattedDate, parsedQuantity, parsedConsumed });
+
+
+    const [categoryCheck] = await db.query("SELECT id FROM categories WHERE id = ?", [categoryId]);
+    if (categoryCheck.length === 0) {
+      return res.status(400).json({ error: "Invalid category ID" });
+    }
+
+    
+    const [lastEntry] = await db.query(
+      "SELECT in_hand_stock FROM products WHERE name = ? ORDER BY date DESC LIMIT 1",
+      [name]
+    );
+    
+    let oldStock = lastEntry.length > 0 ? Number(lastEntry[0].in_hand_stock) : 0;
+    
+    await db.query(
+      "INSERT INTO products (name, category, date, old_stock, quantity, consumed) VALUES (?, ?, ?, ?, ?, ?)",
+      [name, categoryId, formattedDate, oldStock, parsedQuantity, parsedConsumed]
+    );
+    
+    let inHandStock = oldStock + parsedQuantity - parsedConsumed;
+
+    console.log("Old Stock:", oldStock, "New In-Hand Stock:", inHandStock);
+
+  
+    await db.query(
+      "INSERT INTO products (name, category, date, old_stock, quantity, consumed) VALUES (?, ?, ?, ?, ?, ?)", 
+      [name, categoryId, formattedDate, oldStock, parsedQuantity, parsedConsumed]
+    );
+    
+
+    return res.json({ added: true, message: "Product added successfully!" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Database error occurred." });
+    console.error("Database Error:", error);
+    res.status(500).json({ error: "Database error occurred.", details: error.message });
   }
 });
 
 
-// ✅ API to fetch existing product details by name
+
 app.get("/product/:name", async (req, res) => {
   try {
     const { name } = req.params;
@@ -101,15 +124,15 @@ app.get("/product/:name", async (req, res) => {
     if (product.length > 0) {
       return res.json(product[0]);
     } else {
-      return res.json(null);
+      return res.status(404).json({ error: "Product not found" });
     }
   } catch (error) {
-    console.error(error);
+    console.error("Database Error:", error);
     res.status(500).json({ error: "Database error occurred." });
   }
 });
 
-// ✅ Add a category
+
 app.post("/categories", async (req, res) => {
   try {
     const { name } = req.body;
@@ -118,12 +141,44 @@ app.post("/categories", async (req, res) => {
     await db.query("INSERT INTO categories (name) VALUES (?)", [name]);
     res.json({ message: "Category added successfully" });
   } catch (error) {
-    console.error(error);
+    console.error("Database Error:", error);
     res.status(500).json({ error: "Failed to add category" });
   }
 });
 
-// ✅ Update a category
+app.get("/analytics", async (req, res) => {
+  try {
+    const { category } = req.query;
+
+    let query = `
+      SELECT 
+        p.name, 
+        p.old_stock, 
+        p.quantity, 
+        p.consumed, 
+        p.in_hand_stock
+      FROM products p
+      WHERE p.old_stock > 0 OR p.quantity > 0 OR p.consumed > 0 OR p.in_hand_stock > 0
+    `;
+
+    const queryParams = [];
+
+    if (category) {
+      query += " AND p.category = (SELECT id FROM categories WHERE name = ?)";
+      queryParams.push(category);
+    }
+
+    const [analyticsData] = await db.query(query, queryParams);
+    
+    res.json(analyticsData);
+  } catch (error) {
+    console.error("Database Error:", error);
+    res.status(500).json({ error: "Database error occurred." });
+  }
+});
+
+
+
 app.put("/categories/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -131,20 +186,22 @@ app.put("/categories/:id", async (req, res) => {
     await db.query("UPDATE categories SET name = ? WHERE id = ?", [name, id]);
     res.json({ message: "Category updated successfully" });
   } catch (error) {
-    res.status(500).json({ error: "Failed to update category", details: error });
+    console.error("Database Error:", error);
+    res.status(500).json({ error: "Failed to update category" });
   }
 });
 
-// ✅ Delete a category
+
 app.delete("/categories/:id", async (req, res) => {
   try {
     const { id } = req.params;
     await db.query("DELETE FROM categories WHERE id = ?", [id]);
     res.json({ message: "Category deleted successfully" });
   } catch (error) {
-    res.status(500).json({ error: "Failed to delete category", details: error });
+    console.error("Database Error:", error);
+    res.status(500).json({ error: "Failed to delete category" });
   }
 });
 
-// ✅ Start the server
+
 app.listen(5000, () => console.log("✅ Server running on port 5000"));
