@@ -202,6 +202,29 @@ app.delete("/categories/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete category" });
   }
 });
+app.put("/update-product", async (req, res) => {
+  const { productId, newStock } = req.body;
+
+  // Get the last in_hand_stock from the database
+  const product = await db.query(
+    "SELECT in_hand_stock FROM products WHERE id = ?",
+    [productId]
+  );
+
+  if (product.length > 0) {
+    const oldStock = product[0].in_hand_stock;
+
+    // Update oldstock and in_hand_stock
+    await db.query(
+      "UPDATE products SET oldstock = ?, in_hand_stock = ? WHERE id = ?",
+      [oldStock, newStock, productId]
+    );
+
+    res.json({ message: "Product updated successfully" });
+  } else {
+    res.status(404).json({ message: "Product not found" });
+  }
+});
 
 
 app.listen(5000, () => console.log("✅ Server running on port 5000"));

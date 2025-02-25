@@ -4,18 +4,20 @@ import Homepage from "./pages/Homepage";
 import Products from "./pages/Products";
 import AddProduct from "./pages/AddProduct";
 import Categories from "./pages/Categories";
-// import Analytics from "./pages/Analytics";
+import Navbar from "./pages/Navbar"; 
 
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Homepage/>} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/add-product" element={<AddProduct />} />
-        <Route path="/categories" element={<Categories />} />
-        {/* <Route path="/analytics" element={<Analytics />} /> */}
-      </Routes>
+      <Navbar /> 
+      <div className="p-4">
+        <Routes>
+          <Route path="/" element={<Homepage />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/add-product" element={<AddProduct />} />
+          <Route path="/categories" element={<Categories />} />
+        </Routes>
+      </div>
     </Router>
   );
 }

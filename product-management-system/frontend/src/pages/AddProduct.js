@@ -59,21 +59,30 @@ function AddProduct() {
     const { name, value } = e.target;
 
     setProduct((prev) => {
-      const updatedProduct = { ...prev, [name]: value };
+      let updatedProduct = { ...prev, [name]: value };
 
+      // ✅ When user enters a product name, check if it exists
       if (name === "name" && value.trim() !== "") {
         axios.get(`${baseurl}/product/${value}`)
           .then((res) => {
             const existingProduct = res.data;
-            setProduct((prev) => ({
-              ...prev,
-              old_stock: existingProduct ? Number(existingProduct.in_hand_stock) : 0,
-            }));
+
+            if (existingProduct) {
+              // ✅ If product exists, set old_stock = last in_hand_stock (read-only)
+              setProduct((prev) => ({
+                ...prev,
+                old_stock: Number(existingProduct.in_hand_stock),
+                in_hand_stock:
+                  Number(existingProduct.in_hand_stock) +
+                  (Number(prev.quantity) || 0) -
+                  (Number(prev.consumed) || 0),
+              }));
+            }
           })
           .catch((err) => console.error(err));
       }
 
-      // ✅ Auto-calculate In-Hand Stock
+
       if (name === "quantity" || name === "consumed") {
         updatedProduct.in_hand_stock =
           (Number(updatedProduct.old_stock) || 0) +
@@ -84,6 +93,8 @@ function AddProduct() {
       return updatedProduct;
     });
   };
+
+
 
   // ✅ Handle Category Selection
   const handleCategoryChange = (e) => {
@@ -96,11 +107,11 @@ function AddProduct() {
     e.preventDefault();
 
     // Check if the product already exists
-    const existingProduct = products.find((p) => p.name.toLowerCase() === product.name.toLowerCase());
-    if (existingProduct) {
-      alert("This product already exists!");
-      return;
-    }
+    // const existingProduct = products.find((p) => p.name.toLowerCase() === product.name.toLowerCase());
+    // if (existingProduct) {
+    //   alert("This product already exists!");
+    //   return;
+    // }
 
     const formattedProduct = {
       ...product,
@@ -120,7 +131,7 @@ function AddProduct() {
       }
 
       // ✅ Refresh product list
-      fetchProducts();
+     // fetchProducts();
 
       // ✅ Reset form
       setSelectedCategory("");
@@ -169,7 +180,17 @@ function AddProduct() {
         </select>
 
         <input type="date" name="date" value={product.date} onChange={handleChange} className="w-full p-2 border rounded" required />
-        <input type="number" name="old_stock" placeholder="Old Stock" value={product.old_stock} onChange={handleChange} className="w-full p-2 border rounded" />
+        <input
+          type="number"
+          name="old_stock"
+          placeholder="Old Stock"
+          value={product.old_stock}
+          className="w-full p-2 border rounded bg-gray-100 cursor-not-allowed"
+          disabled
+        />
+
+
+
         <input type="number" name="quantity" placeholder="Quantity" value={product.quantity} onChange={handleChange} className="w-full p-2 border rounded" />
         <input type="number" name="consumed" placeholder="Consumed" value={product.consumed} onChange={handleChange} className="w-full p-2 border rounded" />
 

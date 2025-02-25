@@ -13,13 +13,15 @@ function Navbar() {
   ];
 
   return (
-    <nav className="bg-blue-600 text-white shadow-md">
+    <nav className="bg-white text-purple-700 shadow-md">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center py-4">
-         
-          <Link to="/" className="text-2xl font-bold">Product Management System</Link>
+          
+          <Link to="/" className="text-2xl font-bold text-purple-800">
+            Product Management System
+          </Link>
 
-      
+          {/* Desktop Menu */}
           <div className="hidden md:flex space-x-6">
             {links.map(({ to, label, icon }) => (
               <motion.div
@@ -27,33 +29,36 @@ function Navbar() {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Link to={to} className="flex items-center gap-2 px-4 py-2 rounded hover:bg-blue-700">
+                <Link 
+                  to={to} 
+                  className="flex items-center gap-2 px-4 py-2 rounded text-purple-700 hover:bg-purple-200 transition"
+                >
                   {icon} {label}
                 </Link>
               </motion.div>
             ))}
           </div>
 
-     
+          {/* Mobile Menu Button */}
           <button className="md:hidden focus:outline-none" onClick={() => setIsOpen(!isOpen)}>
-            {isOpen ? <X size={28} /> : <Menu size={28} />}
+            {isOpen ? <X size={28} className="text-purple-700" /> : <Menu size={28} className="text-purple-700" />}
           </button>
         </div>
       </div>
 
-    
+      {/* Mobile Menu */}
       {isOpen && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="md:hidden bg-blue-700"
+          className="md:hidden bg-purple-100"
         >
           {links.map(({ to, label, icon }) => (
             <Link
               key={to}
               to={to}
-              className="block px-6 py-3 border-b border-blue-500 flex items-center gap-2"
+              className="block px-6 py-3 border-b border-purple-300 flex items-center gap-2 text-purple-700 hover:bg-purple-200 transition"
               onClick={() => setIsOpen(false)}
             >
               {icon} {label}
