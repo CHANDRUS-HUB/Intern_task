@@ -9,7 +9,9 @@ function Navbar() {
   const links = [
     { to: "/products", label: "Manage Products", icon: <Package /> },
     { to: "/add-product", label: "Add Product", icon: <PlusCircle /> },
-    { to: "/categories", label: "Manage Categories", icon: <List /> },
+  
+    { to: "/daily-consumption", label: "Daily Consumption", icon: <List /> }
+
   ];
 
   return (
