@@ -69,7 +69,7 @@ const updateProductByName = async (req, res) => {
     let newStock = Number(new_purchase) || 0;
     let consumedStock = Number(consumed) || 0;
 
-    // ✅ Get the last product entry for this name & category
+  
     const lastProduct = await Product.findOne({ name, category }).sort({ createdAt: -1 });
 
     if (!lastProduct) {
@@ -79,39 +79,39 @@ const updateProductByName = async (req, res) => {
     let oldStock = lastProduct.in_hand_stock;
     let finalInHandStock = oldStock + newStock - consumedStock;
 
-    // ✅ Prevent negative in-hand stock
+  
     if (finalInHandStock < 0) {
       return res.status(400).json({ error: "❌ Error: Consumption exceeds available stock!" });
     }
 
-    // ✅ Get today's date (Midnight to compare correctly)
     let today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // ✅ Check if today's entry already exists
+
     let todayEntry = await Product.findOne({ 
       name, 
       category, 
+      in_hand_stock: oldStock,
       createdAt: { $gte: today } 
     });
 
     if (todayEntry) {
-      // ✅ If a previous product entry exists for today, update the entry
+ 
       todayEntry.new_stock += newStock;
       todayEntry.consumed += consumedStock;
       todayEntry.in_hand_stock = todayEntry.old_stock + todayEntry.new_stock - todayEntry.consumed;
       await todayEntry.save();
       console.log("✅ Updated Today's Entry:", todayEntry);
 
-      // ✅ Add a new row showing updated stock correctly
+   
       const updatedEntry = new Product({
         name,
         category,
-        old_stock: todayEntry.in_hand_stock, // Correct variable name (should be `todayEntry.in_hand_stock`)
+        old_stock: todayEntry.in_hand_stock, 
         new_stock: newStock,
         consumed: consumedStock,
-        in_hand_stock: todayEntry.in_hand_stock + newStock - consumedStock, // Fix to use correct variables
-        createdAt: new Date(), // Current timestamp for new row
+        in_hand_stock: todayEntry.in_hand_stock + newStock - consumedStock, 
+        createdAt: new Date(), 
       });
 
       await updatedEntry.save();
@@ -123,21 +123,21 @@ const updateProductByName = async (req, res) => {
 
     res.json({ success: true, message: "✅ Product stock updated successfully!" });
   } catch (error) {
-    console.error("❌ Update Error:", error); // Log the actual error message
-    res.status(500).json({ error: "⚠️ Server error occurred.", details: error.message }); // Send back error details
+    console.error("❌ Update Error:", error); 
+    res.status(500).json({ error: "⚠️ Server error occurred.", details: error.message }); 
   }
 };
 
-// Fetch latest product by name and category
+
 const getProductByNameAndCategory = async (req, res) => {
   try {
-    const { name, category } = req.query;
-    const product = await Product.findOne({ name, category })
-      .sort({ createdAt: -1 })  // Fetch the latest entry
-      .select("name category in_hand_stock");  // Only fetch relevant fields
+    const { name, category,in_hand_stock } = req.query;
+    const product = await Product.findOne({ name, category ,in_hand_stock})
+      .sort({ createdAt: -1 })  
+      .select("name category in_hand_stock"); 
 
     if (product) {
-      return res.json(product);  // Return the most recent product data
+      return res.json(product);  
     } else {
       return res.status(404).json({ error: "Product not found" });
     }

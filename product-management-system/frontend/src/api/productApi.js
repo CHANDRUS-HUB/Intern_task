@@ -54,15 +54,7 @@ export const updateProduct = async (name, category, { newStock, consumed }) => {
   }
 };
 
-export const getProductByNameAndCategory = async (name, category) => {
-  try {
-    const response = await axios.get('/api/products', {
-      params: { name, category }
-    });
-    return response.data; // Return the product data
-  } catch (error) {
-    throw new Error('Error fetching product details');
-  }
-};
+
+
 
 
