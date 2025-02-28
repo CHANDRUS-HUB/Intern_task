@@ -14,7 +14,8 @@ router.get("/products", getProducts);
 router.post("/add-product", addProduct);
 
 // ✅ Route to update an existing product
-router.put("/update-product/:name", updateProductByName);
+router.put("/update-product", updateProductByName);
+
 
 
 module.exports = router;

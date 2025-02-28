@@ -11,6 +11,7 @@ const AddProduct = () => {
     category: "",
     quantity: "",
     unit: "",
+    consumed: "",
   });
 
   // Fetch category from backend when product name changes
@@ -35,22 +36,46 @@ const AddProduct = () => {
 
   // Handle input changes
   const handleChange = (e) => {
-    setProduct({ ...product, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    // Validate product name to not accept numbers
+    if (name === "name" && /\d/.test(value)) {
+      toast.error("❌ Product name should not contain numbers.");
+      return;
+    }
+
+    // Validate quantity and consumed
+    if (name === "quantity" || name === "consumed") {
+      const updatedProduct = { ...product, [name]: value };
+      if (parseFloat(updatedProduct.consumed) > parseFloat(updatedProduct.quantity)) {
+        toast.error("❌ Consumed quantity cannot be more than total quantity.");
+      }
+    }
+
+    setProduct({ ...product, [name]: value });
   };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     if (!product.category) {
       toast.error("❌ Please enter a valid product name.");
       return;
     }
-
+  
+    // ✅ Log data before sending
+    console.log("📤 Sending Product Data:", {
+      ...product,
+      new_stock: product.quantity, // ✅ Ensure backend gets new_stock
+    });
+  
     try {
-      await addProduct(product);
-      
-      // ✅ Show success toast
+      await addProduct({
+        ...product,
+        new_stock: product.quantity, // ✅ Explicitly send new_stock
+      });
+  
       toast.success("✅ Product added successfully!", {
         position: "top-right",
         autoClose: 3000,
@@ -60,13 +85,15 @@ const AddProduct = () => {
         draggable: true,
         progress: undefined,
       });
-
+  
       // ✅ Reset form after success
-      setProduct({ name: "", category: "", quantity: "", unit: "" });
+      setProduct({ name: "", category: "", quantity: "", unit: "", consumed: "" });
     } catch (error) {
+      console.error("❌ API Error:", error.response?.data || error.message);
       toast.error("⚠️ Error adding product.");
     }
   };
+  
 
   return (
     <div className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">

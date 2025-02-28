@@ -5,7 +5,11 @@ const getProducts = async (req, res) => {
   try {
     const { category } = req.query;
     const filter = category ? { category } : {};
-    const products = await Product.find(filter).select("name category old_stock quantity unit consumed in_hand_stock");
+
+  
+    const products = await Product.find(filter)
+      .sort({ createdAt: -1 }) // Show latest first
+      .select("name category old_stock new_stock consumed in_hand_stock createdAt");
 
     res.json(products);
   } catch (error) {
@@ -15,12 +19,16 @@ const getProducts = async (req, res) => {
 };
 
 
+
 // ✅ Add a New Product
 const addProduct = async (req, res) => {
   try {
-    const { name, category, quantity, unit } = req.body;
+    console.log("📩 Incoming Product Data:", req.body); // ✅ Debugging log
 
-    if (!name || !category || !quantity || !unit) {
+    const { name, category, new_stock, unit, consumed } = req.body;
+
+    if (!name || !category || !new_stock || !unit || consumed === undefined) {
+      console.log("❌ Missing required fields:", req.body);
       return res.status(400).json({ error: "❌ Missing required fields." });
     }
 
@@ -33,14 +41,16 @@ const addProduct = async (req, res) => {
     product = new Product({
       name,
       category,
-      quantity: Number(quantity),
+      old_stock: 0,  
+      new_stock: Number(new_stock),  
       unit,
-      old_stock: 0,
-      consumed: 0, // ✅ Ensure consumed is explicitly stored
-      in_hand_stock: Number(quantity),
+      consumed: Number(consumed) || 0, 
+      in_hand_stock: Number(new_stock) - (Number(consumed) || 0), 
     });
 
     await product.save();
+    console.log("✅ Product added successfully:", product);
+
     res.status(201).json({ success: true, message: "✅ Product added successfully!", data: product });
   } catch (error) {
     console.error("❌ Error adding product:", error);
@@ -49,45 +59,93 @@ const addProduct = async (req, res) => {
 };
 
 
+
 // ✅ Update an Existing Product by Name
 const updateProductByName = async (req, res) => {
   try {
-    const { name } = req.params;
-    const { category, new_purchase, consumed } = req.body;
+    console.log("📩 Received Update Request:", req.body);
+    const { name, category, new_purchase, consumed } = req.body;
 
-    const purchaseQty = Number(new_purchase) || 0;
-    const consumedQty = Number(consumed) || 0;
+    let newStock = Number(new_purchase) || 0;
+    let consumedStock = Number(consumed) || 0;
 
-    const product = await Product.findOne({ name, category });
+    // ✅ Get the last product entry for this name & category
+    const lastProduct = await Product.findOne({ name, category }).sort({ createdAt: -1 });
 
-    if (!product) {
-      return res.status(404).json({ error: `❌ Product '${name}' not found in category '${category}'` });
+    if (!lastProduct) {
+      return res.status(400).json({ error: "⚠️ Error: Product does not exist. Please add it first." });
     }
 
-    const old_stock = product.in_hand_stock;
-    const updated_in_hand_stock = old_stock + purchaseQty - consumedQty;
+    let oldStock = lastProduct.in_hand_stock;
+    let finalInHandStock = oldStock + newStock - consumedStock;
 
-    if (updated_in_hand_stock < 0) {
-      return res.status(400).json({ error: "⚠️ In-Hand Stock cannot be negative." });
+    // ✅ Prevent negative in-hand stock
+    if (finalInHandStock < 0) {
+      return res.status(400).json({ error: "❌ Error: Consumption exceeds available stock!" });
     }
 
-    product.old_stock = old_stock;
-    product.quantity += purchaseQty;
-    product.consumed += consumedQty; // ✅ Ensure previous consumed is updated
-    product.in_hand_stock = updated_in_hand_stock;
+    // ✅ Get today's date (Midnight to compare correctly)
+    let today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    await product.save();
-
-    res.json({
-      success: true,
-      message: `✅ Product '${name}' updated successfully!`,
-      data: product,
+    // ✅ Check if today's entry already exists
+    let todayEntry = await Product.findOne({ 
+      name, 
+      category, 
+      createdAt: { $gte: today } 
     });
+
+    if (todayEntry) {
+      // ✅ If a previous product entry exists for today, update the entry
+      todayEntry.new_stock += newStock;
+      todayEntry.consumed += consumedStock;
+      todayEntry.in_hand_stock = todayEntry.old_stock + todayEntry.new_stock - todayEntry.consumed;
+      await todayEntry.save();
+      console.log("✅ Updated Today's Entry:", todayEntry);
+
+      // ✅ Add a new row showing updated stock correctly
+      const updatedEntry = new Product({
+        name,
+        category,
+        old_stock: todayEntry.in_hand_stock, // Correct variable name (should be `todayEntry.in_hand_stock`)
+        new_stock: newStock,
+        consumed: consumedStock,
+        in_hand_stock: todayEntry.in_hand_stock + newStock - consumedStock, // Fix to use correct variables
+        createdAt: new Date(), // Current timestamp for new row
+      });
+
+      await updatedEntry.save();
+      console.log("✅ New Updated Stock Entry Added:", updatedEntry);
+
+    } else {
+      return res.status(400).json({ error: "⚠️ Error: No existing entry for today. No new entry will be created." });
+    }
+
+    res.json({ success: true, message: "✅ Product stock updated successfully!" });
   } catch (error) {
-    console.error("❌ Error updating product:", error);
-    res.status(500).json({ error: "Database error occurred." });
+    console.error("❌ Update Error:", error); // Log the actual error message
+    res.status(500).json({ error: "⚠️ Server error occurred.", details: error.message }); // Send back error details
+  }
+};
+
+// Fetch latest product by name and category
+const getProductByNameAndCategory = async (req, res) => {
+  try {
+    const { name, category } = req.query;
+    const product = await Product.findOne({ name, category })
+      .sort({ createdAt: -1 })  // Fetch the latest entry
+      .select("name category in_hand_stock");  // Only fetch relevant fields
+
+    if (product) {
+      return res.json(product);  // Return the most recent product data
+    } else {
+      return res.status(404).json({ error: "Product not found" });
+    }
+  } catch (error) {
+    console.error("❌ Error fetching product:", error);
+    res.status(500).json({ error: "Error fetching product details" });
   }
 };
 
 
-module.exports = { getProducts, addProduct, updateProductByName };
+module.exports = { getProducts, addProduct, updateProductByName,getProductByNameAndCategory};
