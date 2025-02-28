@@ -9,7 +9,7 @@ const productSchema = new mongoose.Schema(
     consumed: { type: Number, default: 0 },
     in_hand_stock: { type: Number, default: 0 },
   },
-  { timestamps: true } // ✅ Adds "createdAt" automatically
+  { timestamps: true } 
 );
 
 const Product = mongoose.model("Product", productSchema);

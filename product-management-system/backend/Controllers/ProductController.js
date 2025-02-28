@@ -27,7 +27,7 @@ const addProduct = async (req, res) => {
 
     const { name, category, new_stock, unit, consumed } = req.body;
 
-    if (!name || !category || !new_stock || !unit || consumed === undefined) {
+    if (!name || !category || !new_stock || !unit || !consumed ) {
       console.log("❌ Missing required fields:", req.body);
       return res.status(400).json({ error: "❌ Missing required fields." });
     }
