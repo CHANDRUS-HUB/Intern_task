@@ -1,95 +1,93 @@
-const Product = require("../Models/ProductModel");
+const Product = require("../Models/ProductModel"); // ✅ Ensure correct model path
 
-// ✅ Fetch all products (Optional: Filter by category)
+// ✅ Get All Products (Optional: Filter by category)
 const getProducts = async (req, res) => {
   try {
     const { category } = req.query;
-    const filter = category ? { where: { category } } : {};
-    const products = await Product.findAll(filter);
+    const filter = category ? { category } : {};
+    const products = await Product.find(filter).select("name category old_stock quantity unit consumed in_hand_stock");
+
     res.json(products);
   } catch (error) {
-    console.error("Error fetching products:", error);
+    console.error("❌ Error fetching products:", error);
     res.status(500).json({ error: "Database error occurred." });
   }
 };
 
-// ✅ Add a new product (First Page)
+
+// ✅ Add a New Product
 const addProduct = async (req, res) => {
   try {
     const { name, category, quantity, unit } = req.body;
 
-    // 🔎 Check last recorded in-hand stock for the product
-    const lastProduct = await Product.findOne({
-      where: { name, category },
-      order: [["id", "DESC"]],
-    });
+    if (!name || !category || !quantity || !unit) {
+      return res.status(400).json({ error: "❌ Missing required fields." });
+    }
 
-    let old_stock = lastProduct ? lastProduct.in_hand_stock : 0;
-    let in_hand_stock = old_stock + quantity; // No consumption yet
+    let product = await Product.findOne({ name, category });
 
-    // ✅ Save new product entry
-    const newProduct = await Product.create({
+    if (product) {
+      return res.status(400).json({ error: "⚠️ Product already exists. Use update instead." });
+    }
+
+    product = new Product({
       name,
       category,
-      old_stock,
-      quantity,
+      quantity: Number(quantity),
       unit,
-      consumed: 0, // Default 0 when added
-      in_hand_stock,
+      old_stock: 0,
+      consumed: 0, // ✅ Ensure consumed is explicitly stored
+      in_hand_stock: Number(quantity),
     });
 
-    res.json({ success: true, message: "Product added successfully!", data: newProduct });
+    await product.save();
+    res.status(201).json({ success: true, message: "✅ Product added successfully!", data: product });
   } catch (error) {
-    console.error("Error adding product:", error);
+    console.error("❌ Error adding product:", error);
     res.status(500).json({ error: "Database error occurred." });
   }
 };
 
-// ✅ Update stock after new purchase & consumption (Second Page)
-// ✅ Update stock after new purchase & consumption (Second Page)
+
+// ✅ Update an Existing Product by Name
 const updateProductByName = async (req, res) => {
   try {
-    const { name } = req.params; // Get product name from URL
-    const { category, new_purchase, consumed } = req.body; // Get data from body
+    const { name } = req.params;
+    const { category, new_purchase, consumed } = req.body;
 
-    // 🔎 Find the product in the database
-    const product = await Product.findOne({
-      where: { name, category },
-      order: [["id", "DESC"]],
-    });
+    const purchaseQty = Number(new_purchase) || 0;
+    const consumedQty = Number(consumed) || 0;
+
+    const product = await Product.findOne({ name, category });
 
     if (!product) {
-      return res.status(404).json({ error:` Product '${name}' not found in category '${category}'` });
+      return res.status(404).json({ error: `❌ Product '${name}' not found in category '${category}'` });
     }
 
-    // 🧮 Calculate stock updates
-    const old_stock = product.in_hand_stock; // Get previous in-hand stock
-    const updated_in_hand_stock = old_stock + new_purchase - consumed;
+    const old_stock = product.in_hand_stock;
+    const updated_in_hand_stock = old_stock + purchaseQty - consumedQty;
 
-    // ✅ Update the product in the database
-    await Product.update(
-      {
-        old_stock,
-        quantity: new_purchase,
-        consumed,
-        in_hand_stock: updated_in_hand_stock,
-      },
-      { where: { id: product.id } }
-    );
+    if (updated_in_hand_stock < 0) {
+      return res.status(400).json({ error: "⚠️ In-Hand Stock cannot be negative." });
+    }
 
-    // 🔄 Fetch updated product
-    const updatedProduct = await Product.findByPk(product.id);
+    product.old_stock = old_stock;
+    product.quantity += purchaseQty;
+    product.consumed += consumedQty; // ✅ Ensure previous consumed is updated
+    product.in_hand_stock = updated_in_hand_stock;
+
+    await product.save();
 
     res.json({
       success: true,
-      message: `Product '${name}' updated successfully!`,
-      data: updatedProduct,
+      message: `✅ Product '${name}' updated successfully!`,
+      data: product,
     });
   } catch (error) {
-    console.error("Error updating product:", error);
+    console.error("❌ Error updating product:", error);
     res.status(500).json({ error: "Database error occurred." });
   }
 };
 
-// ✅ Export all functions correctly
+
 module.exports = { getProducts, addProduct, updateProductByName };

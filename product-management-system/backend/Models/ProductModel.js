@@ -1,26 +1,13 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/database");
+const mongoose = require("mongoose");
 
-const Product = sequelize.define(
-  "Product",
-  {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    name: { type: DataTypes.STRING, allowNull: false },
-    category: { type: DataTypes.STRING, allowNull: false },
-    unit: { type: DataTypes.STRING, allowNull: false },
-    old_stock: { type: DataTypes.INTEGER, defaultValue: 0 },
-    quantity: { type: DataTypes.INTEGER, allowNull: false },
-    consumed: { type: DataTypes.INTEGER, defaultValue: 0 },
-    in_hand_stock: { 
-      type: DataTypes.INTEGER, 
-      allowNull: false, 
-      defaultValue: 0 
-    },
-  },
-  {
-    tableName: "products",
-    timestamps: false, // Disable createdAt & updatedAt
-  }
-);
+const productSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  category: { type: String, required: true },
+  old_stock: { type: Number, default: 0 },  // ✅ Ensure it's included
+  quantity: { type: Number, required: true },
+  unit: { type: String, required: true },
+  consumed: { type: Number, default: 0 },  // ✅ Fix: Ensure `consumed` field is included
+  in_hand_stock: { type: Number, default: 0 }
+});
 
-module.exports = Product;
+module.exports = mongoose.model("Product", productSchema);

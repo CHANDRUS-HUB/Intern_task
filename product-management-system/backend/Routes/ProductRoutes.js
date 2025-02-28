@@ -1,10 +1,20 @@
 const express = require("express");
-const { getProducts, addProduct, updateProductByName } = require("../Controllers/ProductController");
+const {
+  getProducts,
+  addProduct,
+  updateProductByName,
+} = require("../Controllers/ProductController");
 
 const router = express.Router();
 
-router.get("/products", getProducts); // ✅ Fetch all products (Optional filter by category)
-router.post("/add-product", addProduct); // ✅ First page: Add product
-router.put("/update-product", updateProductByName); // ✅ Second page: Update stock after purchase & consumption
+// ✅ Route to get all products (with optional category filter)
+router.get("/products", getProducts);
+
+// ✅ Route to add a new product
+router.post("/add-product", addProduct);
+
+// ✅ Route to update an existing product
+router.put("/update-product/:name", updateProductByName);
+
 
 module.exports = router;

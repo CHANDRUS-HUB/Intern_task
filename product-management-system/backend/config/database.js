@@ -1,19 +1,14 @@
-const { Sequelize } = require("sequelize");
+const mongoose = require("mongoose");
+require("dotenv").config();
 
-const sequelize = new Sequelize("Product_Management", "root", "root", {
-  host: "localhost",
-  dialect: "mysql",
-  logging: false, // Disable logging
-});
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI); 
+    console.log("✅ MongoDB connected successfully!");
+  } catch (error) {
+    console.error("❌ MongoDB connection error:", error);
+    process.exit(1);
+  }
+};
 
-sequelize
-  .authenticate()
-  .then(() => console.log("Database connected successfully."))
-  .catch((err) => console.error("Error connecting to database:", err));
-
-// ✅ Sync database to automatically create tables
-sequelize.sync({ alter: true }) // `alter: true` updates table structure if changed
-  .then(() => console.log("Database synced. Tables created if missing."))
-  .catch((err) => console.error("Error syncing database:", err));
-
-module.exports = sequelize;
+module.exports = connectDB;
