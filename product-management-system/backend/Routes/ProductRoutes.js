@@ -16,8 +16,9 @@ router.post("/add-product", addProduct);
 //  Route to update an existing product
 router.get("/product/:name/:category", getProductByNameAndCategory);
 
-router.put("/update-product/:name/:category", updateProductByName);
+router.put("/update/:name/:category", updateProductByName);
 
+router.get("/product/latest-stock/:category/:name", getProductByNameAndCategory);
 
 
 

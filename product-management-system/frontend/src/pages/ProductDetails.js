@@ -8,10 +8,10 @@ const ViewDetails = () => {
     const loadProducts = async () => {
       try {
         const data = await fetchProducts();
-        console.log("Fetched products:", data); // ✅ Debugging Log
+        console.log("Fetched products:", data); 
         setProducts(data || []);
       } catch (error) {
-        console.error("❌ Error fetching products:", error);
+        console.error(" Error fetching products:", error);
       }
     };
 
@@ -29,6 +29,7 @@ const ViewDetails = () => {
             <th className="border p-2">Category</th>
             <th className="border p-2">Old Stock</th>
             <th className="border p-2">New Stock</th>
+            <th className="border p-2">Unit</th>
             <th className="border p-2">Consumed</th>
             <th className="border p-2">In-Hand Stock</th>
             <th className="border p-2">Date</th> {/* ✅ New Date Column */}
@@ -42,7 +43,7 @@ const ViewDetails = () => {
                 <td className="border p-2">{product.category}</td>
                 <td className="border p-2">{product.old_stock}</td>
                 <td className="border p-2">{product.new_stock !== null ? product.new_stock : 0}</td> 
- {/* ✅ Fix: Show "-" only if null */}
+                <td className="border p-2">{product.unit}</td>
                 <td className="border p-2">{product.consumed}</td>
                 <td className="border p-2">{product.in_hand_stock}</td>
                 <td className="border p-2">
