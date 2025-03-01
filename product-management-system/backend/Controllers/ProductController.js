@@ -1,6 +1,6 @@
-const Product = require("../Models/ProductModel"); // ✅ Ensure correct model path
+const Product = require("../Models/ProductModel"); 
 
-// ✅ Get All Products (Optional: Filter by category)
+
 const getProducts = async (req, res) => {
   try {
     const { category } = req.query;
@@ -13,29 +13,30 @@ const getProducts = async (req, res) => {
 
     res.json(products);
   } catch (error) {
-    console.error("❌ Error fetching products:", error);
+    console.error(" Error fetching products:", error);
     res.status(500).json({ error: "Database error occurred." });
   }
 };
 
 
 
-// ✅ Add a New Product
+//  Add a New Product
 const addProduct = async (req, res) => {
   try {
-    console.log("📩 Incoming Product Data:", req.body); // ✅ Debugging log
+    console.log(" Incoming Product Data:", req.body); //  Debugging log
 
     const { name, category, new_stock, unit, consumed } = req.body;
 
-    if (!name || !category || !new_stock || !unit || !consumed ) {
-      console.log("❌ Missing required fields:", req.body);
-      return res.status(400).json({ error: "❌ Missing required fields." });
+    if (!name || !category || new_stock === undefined || !unit || consumed === undefined) {
+      console.log("⚠️ Missing required fields:", req.body);
+      return res.status(400).json({ error: "All fields (name, category, new_stock, unit, consumed) are required." });
     }
+    
 
     let product = await Product.findOne({ name, category });
 
     if (product) {
-      return res.status(400).json({ error: "⚠️ Product already exists. Use update instead." });
+      return res.status(400).json({ error: " Product already exists. Use update instead." });
     }
 
     product = new Product({
@@ -49,103 +50,101 @@ const addProduct = async (req, res) => {
     });
 
     await product.save();
-    console.log("✅ Product added successfully:", product);
+    console.log(" Product added successfully:", product);
 
-    res.status(201).json({ success: true, message: "✅ Product added successfully!", data: product });
+    res.status(201).json({ success: true, message: "Product added successfully!", data: product });
   } catch (error) {
-    console.error("❌ Error adding product:", error);
+    console.error(" Error adding product:", error);
     res.status(500).json({ error: "Database error occurred." });
   }
 };
 
 
 
-// ✅ Update an Existing Product by Name
+//  Update an Existing Product by Name
 const updateProductByName = async (req, res) => {
   try {
-    console.log("📩 Received Update Request:", req.body);
-    const { name, category, new_purchase, consumed } = req.body;
+    const { name, category } = req.params;
+    const { new_purchase, consumed } = req.body;
 
-    let newStock = Number(new_purchase) || 0;
-    let consumedStock = Number(consumed) || 0;
+    console.log("📩 Update Request Received:", { name, category, new_purchase, consumed });
 
-  
+    if (!name || !category) {
+      return res.status(400).json({ error: "Product name and category are required." });
+    }
+
+    let newStock = new_purchase !== undefined ? Number(new_purchase) : 0;
+    let consumedStock = consumed !== undefined ? Number(consumed) : 0;
+
+    // 🔍 Find the latest product entry
     const lastProduct = await Product.findOne({ name, category }).sort({ createdAt: -1 });
 
     if (!lastProduct) {
-      return res.status(400).json({ error: "⚠️ Error: Product does not exist. Please add it first." });
+      return res.status(400).json({ error: "Product not found for update. Please add it first." });
     }
 
-    let oldStock = lastProduct.in_hand_stock;
-    let finalInHandStock = oldStock + newStock - consumedStock;
-
-  
-    if (finalInHandStock < 0) {
-      return res.status(400).json({ error: "❌ Error: Consumption exceeds available stock!" });
-    }
-
-    let today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-
-    let todayEntry = await Product.findOne({ 
-      name, 
-      category, 
-      in_hand_stock: oldStock,
-      createdAt: { $gte: today } 
+    console.log("🔍 Before Update:", {
+      oldStock: lastProduct.old_stock,
+      newStockBeforeUpdate: lastProduct.new_stock,
+      consumedBeforeUpdate: lastProduct.consumed,
+      inHandStockBeforeUpdate: lastProduct.in_hand_stock,
     });
 
-    if (todayEntry) {
- 
-      todayEntry.new_stock += newStock;
-      todayEntry.consumed += consumedStock;
-      todayEntry.in_hand_stock = todayEntry.old_stock + todayEntry.new_stock - todayEntry.consumed;
-      await todayEntry.save();
-      console.log("✅ Updated Today's Entry:", todayEntry);
+    // ✅ Ensure consumption does not exceed available stock
+    let finalInHandStock = lastProduct.in_hand_stock + newStock - consumedStock;
 
-   
-      const updatedEntry = new Product({
-        name,
-        category,
-        old_stock: todayEntry.in_hand_stock, 
-        new_stock: newStock,
-        consumed: consumedStock,
-        in_hand_stock: todayEntry.in_hand_stock + newStock - consumedStock, 
-        createdAt: new Date(), 
+    if (finalInHandStock < 0) {
+      return res.status(400).json({
+        error: `Error: You are trying to consume ${consumedStock}, but only ${lastProduct.in_hand_stock} is available.`,
       });
-
-      await updatedEntry.save();
-      console.log("✅ New Updated Stock Entry Added:", updatedEntry);
-
-    } else {
-      return res.status(400).json({ error: "⚠️ Error: No existing entry for today. No new entry will be created." });
     }
 
-    res.json({ success: true, message: "✅ Product stock updated successfully!" });
+    // ✅ Update values in DB
+    lastProduct.new_stock += newStock;
+    lastProduct.consumed += consumedStock;
+    lastProduct.in_hand_stock = finalInHandStock;
+
+    await lastProduct.save();
+
+    console.log("✅ After Update:", {
+      oldStock: lastProduct.old_stock,
+      newStockAfterUpdate: lastProduct.new_stock,
+      consumedAfterUpdate: lastProduct.consumed,
+      inHandStockAfterUpdate: lastProduct.in_hand_stock,
+    });
+
+    res.json({ success: true, message: "Product stock updated successfully!", data: lastProduct });
+
   } catch (error) {
-    console.error("❌ Update Error:", error); 
-    res.status(500).json({ error: "⚠️ Server error occurred.", details: error.message }); 
+    console.error("❌ Update Error:", error);
+    res.status(500).json({ error: "Server error occurred.", details: error.message });
   }
 };
 
 
 const getProductByNameAndCategory = async (req, res) => {
   try {
-    const { name, category,in_hand_stock } = req.query;
-    const product = await Product.findOne({ name, category ,in_hand_stock})
-      .sort({ createdAt: -1 })  
-      .select("name category in_hand_stock"); 
+    let { name, category } = req.params;
 
-    if (product) {
-      return res.json(product);  
-    } else {
-      return res.status(404).json({ error: "Product not found" });
+    // Decode URI components (fix issues with spaces in URLs)
+    name = decodeURIComponent(name);
+    category = decodeURIComponent(category);
+
+    console.log("📌 Fetching Product:", { name, category });
+
+    const product = await Product.findOne({ name, category })
+      .sort({ createdAt: -1 }) 
+      .select("name category old_stock new_stock consumed in_hand_stock createdAt");
+
+    if (!product) {
+      return res.status(404).json({ error: "❌ Product not found" });
     }
+
+    res.json(product);
   } catch (error) {
     console.error("❌ Error fetching product:", error);
-    res.status(500).json({ error: "Error fetching product details" });
+    res.status(500).json({ error: "❌ Error fetching product details" });
   }
 };
-
 
 module.exports = { getProducts, addProduct, updateProductByName,getProductByNameAndCategory};
