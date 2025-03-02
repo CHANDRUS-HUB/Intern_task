@@ -1,99 +1,74 @@
-import { useState, useEffect } from "react";
-import { addProduct } from "../api/productApi";
-import { toast } from "react-toastify";
-import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000/api"; // Backend URL
+import { useState } from "react";
+import { toast } from "react-toastify";
+import { addProduct } from "../api/productApi"; 
+
+const unitTypes = ["kg", "g", "liter", "ml", "package", "piece", "box", "dozen", "bottle", "can"];
 
 const AddProduct = () => {
   const [product, setProduct] = useState({
     name: "",
-    category: "",
     quantity: "",
     unit: "",
     consumed: "",
   });
 
-  // Fetch category from backend when product name changes
-  useEffect(() => {
-    const fetchCategory = async () => {
-      if (product.name.trim() !== "") {
-        try {
-          const response = await axios.get(`${API_BASE_URL}/get-category/${product.name}`);
-          setProduct((prev) => ({
-            ...prev,
-            category: response.data.category || "",
-          }));
-        } catch (error) {
-          console.error("Error fetching category:", error);
-          setProduct((prev) => ({ ...prev, category: "" }));
-        }
-      }
-    };
+  const [loading, setLoading] = useState(false); 
 
-    fetchCategory();
-  }, [product.name]);
-
-  // Handle input changes
+  
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Validate product name to not accept numbers
-    if (name === "name" && /\d/.test(value)) {
-      toast.error("❌ Product name should not contain numbers.");
-      return;
+    if (name === "name") {
+      if (!/^[A-Za-z ]*$/.test(value)) {
+        toast.error("❌ Product name should only contain letters and spaces.");
+        return;
+      }
     }
 
-    // Validate quantity and consumed
     if (name === "quantity" || name === "consumed") {
-      const updatedProduct = { ...product, [name]: value };
-      if (parseFloat(updatedProduct.consumed) > parseFloat(updatedProduct.quantity)) {
-        toast.error("❌ Consumed quantity cannot be more than total quantity.");
+      if (!/^\d*\.?\d*$/.test(value)) {
+        toast.error("❌ Please enter a valid number.");
+        return;
       }
     }
 
     setProduct({ ...product, [name]: value });
   };
 
-  // Handle form submission
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
-    if (!product.category) {
-      toast.error("❌ Please enter a valid product name.");
+
+    if (!product.name.trim()) {
+      toast.error(" Product name is required.");
       return;
     }
-  
-    // ✅ Log data before sending
-    console.log("📤 Sending Product Data:", {
-      ...product,
-      new_stock: product.quantity, // ✅ Ensure backend gets new_stock
-    });
-  
+
+    if (!unitTypes.includes(product.unit)) {
+      toast.error(" Invalid unit. Choose from: " + unitTypes.join(", "));
+      return;
+    }
+
+    setLoading(true); 
+
     try {
       await addProduct({
-        ...product,
-        new_stock: product.quantity, // ✅ Explicitly send new_stock
+        name: product.name.trim(),
+        quantity: product.quantity, 
+        unit: product.unit,
+        consumed: product.consumed,
       });
-  
-      toast.success("✅ Product added successfully!", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-  
-      // ✅ Reset form after success
-      setProduct({ name: "", category: "", quantity: "", unit: "", consumed: "" });
+
+      toast.success(" Product added successfully!");
+      setProduct({ name: "", quantity: "", unit: "", consumed: "" });
     } catch (error) {
-      console.error("❌ API Error:", error.response?.data || error.message);
-      toast.error("⚠️ Error adding product.");
+      console.error(" API Error:", error.response?.data || error.message);
+      toast.error(" Error adding product.");
+    } finally {
+      setLoading(false);
     }
   };
-  
 
   return (
     <div className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
@@ -108,22 +83,6 @@ const AddProduct = () => {
           className="w-full p-2 border rounded"
           required
         />
-
-        <select
-          name="category"
-          value={product.category}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          required
-        >
-          <option value="">Select Category</option>
-          <option value="Dairy">Dairy</option>
-          <option value="Fruits">Fruits</option>
-          <option value="Grains">Grains</option>
-          <option value="Bakery">Bakery</option>
-          <option value="Washroom">Washroom</option>
-          <option value="Stationery">Stationery</option>
-        </select>
 
         <input
           type="number"
@@ -142,11 +101,12 @@ const AddProduct = () => {
           className="w-full p-2 border rounded"
           required
         >
-          <option value="">Select Quantity</option>
-          <option value="kg">Kg</option>
-          <option value="liter">Liter</option>
-          <option value="package">Package</option>
+          <option value="">Select Unit</option>
+          {unitTypes.map((unit) => (
+            <option key={unit} value={unit}>{unit}</option>
+          ))}
         </select>
+
         <input
           type="number"
           name="consumed"
@@ -157,8 +117,12 @@ const AddProduct = () => {
           required
         />
 
-        <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded">
-          Add Product
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white p-2 rounded"
+          disabled={loading}
+        >
+          {loading ? "Adding..." : "Add Product"}
         </button>
       </form>
     </div>

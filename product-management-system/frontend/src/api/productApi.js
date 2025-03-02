@@ -1,93 +1,91 @@
 import axios from "axios";
-const API_BASE_URL = "http://localhost:5000"; // Make sure this URL is correct!
+const API_BASE_URL = "http://localhost:4000"; // Ensure this URL is correct!
 
+// Fetch products with optional category filter
 export const fetchProducts = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/products`);
-    console.log(" API Response:", response.data); //  Debugging Log
-    return response.data; // Ensure correct return value
+    console.log(" API Response:", response.data);
+    return response.data;
   } catch (error) {
-    console.error(" Error fetching products:", error.response?.data || error.message);
+    console.error("API Fetch Error:", error.response?.data || error.message);
     return [];
   }
 };
 
-
-
+// Fetch product's latest stock by name and category
 export const fetchLatestStock = async (productName, category) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/product/latest-stock/${productName}/${category}`);
+    const response = await axios.get(`${API_BASE_URL}/product/${productName.toLowerCase()}/${category.toLowerCase()}`);
     console.log("Latest Stock Response:", response.data);
     return response.data;
   } catch (error) {
-    console.error(" Error fetching latest stock:", error.response?.data || error.message);
-    return null;
+    console.error("Error fetching latest stock:", error.response?.data || error.message);
+    return null; // Return null in case of error
   }
 };
 
+// Fetch product by name and category
+  export const getProductByName = async (name) => {
+    try {
+      // Convert both name and category to lowercase to match backend
+      const response = await axios.get(`${API_BASE_URL}/product/${name.toLowerCase()}}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching product:", error.response?.data || error.message);
+      return null; 
+    }
+  };
 
-// ✅ Fetch a product by name & category
-export const getProductByName = async (name, category) => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/product/${name}/${category}`);
-    return response.data;
-  } catch (error) {
-    console.error(" Error fetching product:", error);
-    return null;
-  }
-};
 
 export const addProduct = async (productData) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/add-product`, productData);
+    console.log("📤 Sending Product Data:", productData);
+
+    const response = await axios.post(`${API_BASE_URL}/add-product`, {
+      name: productData.name.trim(), 
+      new_stock: Number(productData.quantity), 
+      unit: productData.unit, 
+      consumed: Number(productData.consumed), 
+    });
+
+    console.log("✅ Product added:", response.data);
     return response.data;
   } catch (error) {
-    console.error(" Error adding product:", error);
-    throw error;
+    console.error("❌ Error adding product:", error.response?.data || error.message);
+    throw error; 
   }
 };
 
 export const checkProductExists = async (name, category) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/product/${name}/${category}`);
-    return response.data; // Product exists
+    const response = await axios.get(`${API_BASE_URL}/product/${name.toLowerCase()}/${category.toLowerCase()}`);
+    return response.data; 
   } catch (error) {
-    console.error(" Product not found:", error.response?.data || error.message);
-    return null; // Product does NOT exist
-  }
-};  
-
-
-export const updateProduct = async (name, category, { newStock,unit, consumed }) => {
-  console.log("📡 Checking if product exists:", { name, category });
-  const productExists = await checkProductExists(name, category);
-
-  if (!productExists) {
-    console.error(" Error: Product does not exist in the database. Cannot update.");
-    return { error: "⚠️ Product does not exist. Please add it first!" };
-  }
-  console.log("📡 Sending update request:", { name, category, newStock, unit,consumed });
-  if (!unit) {
-    console.error(" Error: `unit` is missing!");
-    return;
-  }
-  try {
-    const response = await axios.put(`${API_BASE_URL}/update/${name.tolowercase()}/${category.tolowercase()}`, {
-      name,
-      category,
-      unit,
-      new_purchase: Number(newStock) || 0, 
-      consumed: Number(consumed) || 0,
-    });
-
-    console.log(" Update success:", response.data);
-    return response.data;
-  } catch (error) {
-    console.error(" API Update Failed:", error.response?.data || error.message);
-    throw error;
+    console.error("Product not found:", error.response?.data || error.message);
+    return null; 
   }
 };
 
 
+export const updateProduct = async (name, { newStock, unit, consumed }) => {
+  try {
+    console.log("📡 Sending update request:", { name, newStock, unit, consumed });
 
+    if (!unit) {
+      throw new Error("⚠️ Unit is required!");
+    }
 
+    const response = await axios.put(`${API_BASE_URL}/products/${name.toLowerCase()}`, {
+      new_stock: Number(newStock) || 0, // ✅ Convert to number
+      unit,
+      consumed: Number(consumed) || 0, // ✅ Convert to number
+    });
+
+    console.log("✅ Update success:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ API Update Failed:", error.response?.data || error.message);
+    throw error;
+  }
+};

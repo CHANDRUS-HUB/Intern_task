@@ -1,90 +1,86 @@
 import { useState, useEffect } from "react";
-import { getProductByName, updateProduct ,} from "../api/productApi";
+import { getProductByName, updateProduct } from "../api/productApi";
 import { toast } from "react-toastify";
+
+const unitTypes = ["kg", "g", "liter", "ml", "package", "piece", "box", "dozen", "bottle", "can"];
 
 const DailyConsumption = () => {
   const [category, setCategory] = useState("");
   const [productName, setProductName] = useState("");
-  const [oldStock, setOldStock] = useState(0);  // Initial old stock state
+  const [unit, setUnit] = useState("");
+  const [oldStock, setOldStock] = useState(0);
   const [newStock, setNewStock] = useState("");
   const [consumed, setConsumed] = useState("");
   const [inHandStock, setInHandStock] = useState(0);
 
-  // Fetch product details when category and product name are selected
+  // Fetch product details when product name changes
   useEffect(() => {
-    if (productName && category) {
-      getProductByName(productName, category)
+    if (productName) {
+      getProductByName(productName)
         .then((data) => {
           if (data) {
-            // Set the old stock value from the latest product record
-            setOldStock(data.in_hand_stock || 0); 
+            setOldStock(data.in_hand_stock || 0);
+            setUnit(data.unit || "");
           } else {
-            setOldStock(0);  // Reset if product is not found
+            setOldStock(0);
+            setUnit("");
           }
         })
-        .catch(() => toast.error("Error fetching product details."));
+        .catch(() => toast.error("❌ Error fetching product details."));
     }
-  }, [productName, category]);  // Triggered when category or product name changes
+  }, [productName]);
 
   // Recalculate in-hand stock when new stock or consumed stock changes
   useEffect(() => {
     const purchase = Number(newStock) || 0;
     const consumedQty = Number(consumed) || 0;
-    setInHandStock(oldStock + purchase - consumedQty);  // Update in-hand stock dynamically
+    setInHandStock(oldStock + purchase - consumedQty);
   }, [newStock, consumed, oldStock]);
 
   // Handle Form Submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!category || !productName) {
-      return toast.error("Please select a category and enter a product name.");
+
+    if (!productName) {
+      return toast.error("❌ Please enter a product name.");
     }
-  
+
+    if (!unit) {
+      return toast.error("❌ Please select a unit.");
+    }
+
+    if (Number(consumed) > oldStock + Number(newStock)) {
+      return toast.error("❌ Consumed quantity cannot exceed available stock.");
+    }
+
     const updateData = {
-      newStock: newStock || 0,  // Ensure numeric values
-      consumed: consumed || 0
+      newStock,
+      unit,
+      consumed,
     };
-  
-    console.log("📡 Sending update request:", { productName, category, updateData });
-  
+
+    console.log("📡 Sending update request:", { productName, updateData });
+
     try {
-      const response = await updateProduct(productName, category, updateData);
+      const response = await updateProduct(productName, updateData);
       console.log("🟢 Update Response:", response);
-      toast.success("Stock updated successfully!");
-  
+      toast.success("✅ Stock updated successfully!");
+
       // Reset form fields
       setProductName("");
       setNewStock("");
       setConsumed("");
+      setInHandStock(0);
     } catch (error) {
       console.error("❌ Update Failed:", error);
-      toast.error(`Error updating stock: ${error.response?.data?.error || error.message}`);
+      toast.error(`⚠️ Error updating stock: ${error.response?.data?.error || error.message}`);
     }
   };
-  
 
   return (
     <div className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4 text-gray-700">Daily Consumption</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-      
-        <select
-          name="category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="w-full p-2 border rounded mb-2"
-          required
-        >
-          <option value="">Select Category</option>
-          <option value="Dairy">Dairy</option>
-          <option value="Fruits">Fruits</option>
-          <option value="Grains">Grains</option>
-          <option value="Bakery">Bakery</option>
-          <option value="Washroom">Washroom</option>
-          <option value="Stationery">Stationery</option>
-        </select>
-
         <label className="text-b text-gray-600"> Product Name</label>
         <input
           type="text"
@@ -96,14 +92,8 @@ const DailyConsumption = () => {
           required
         />
 
-        <label className="text-b text-gray-600 mt-2 ">Old Stock</label>
-        <input
-          type="number"
-          name="oldStock"
-          value={oldStock}
-          readOnly
-          className="w-full p-2 border rounded bg-gray-100"
-        />
+        <label className="text-b text-gray-600 mt-2">Old Stock</label>
+        <input type="number" name="oldStock" value={oldStock} readOnly className="w-full p-2 border rounded bg-gray-100" />
 
         <label className="text-b text-gray-600">New Stock Quantity</label>
         <input
@@ -127,14 +117,16 @@ const DailyConsumption = () => {
           required
         />
 
+        <label className="text-b text-gray-600">Unit</label>
+        <select name="unit" value={unit} onChange={(e) => setUnit(e.target.value)} className="w-full p-2 border rounded" required>
+          <option value="">Select Unit</option>
+          {unitTypes.map((unit) => (
+            <option key={unit} value={unit}>{unit}</option>
+          ))}
+        </select>
+
         <label className="text-b text-gray-600">In Hand Stock</label>
-        <input
-          type="number"
-          name="inHandStock"
-          value={inHandStock}
-          readOnly
-          className="w-full p-2 border rounded bg-gray-100"
-        />
+        <input type="number" name="inHandStock" value={inHandStock} readOnly className="w-full p-2 border rounded bg-gray-100" />
 
         <button type="submit" className="w-full bg-green-600 text-white p-2 rounded">
           Update Stock

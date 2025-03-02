@@ -7,7 +7,7 @@ const getProducts = async (req, res) => {
     const filter = category ? { category } : {};
 
     const products = await Product.find(filter)
-      .sort({ createdAt: -1 }) 
+      .sort({ createdAt: 1 }) 
       .select("name category old_stock new_stock unit consumed in_hand_stock createdAt");
 
     res.json(products);
@@ -76,7 +76,7 @@ const addProduct = async (req, res) => {
 };
 
 
-const unittTypes = ["kg", "g", "liter", "ml", "package", "piece", "box", "dozen", "bottle", "can"]
+
 
 const updateProductByName = async (req, res) => {
   try {
@@ -105,7 +105,7 @@ const updateProductByName = async (req, res) => {
     
     const product = await Product.findOne({
       name: { $regex: new RegExp(`^${name}$`, "i") }
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: 1 });
 
     if (!product) {
       console.log(" Product does not exist. Update request rejected.");
