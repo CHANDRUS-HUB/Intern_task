@@ -26,16 +26,19 @@ export const fetchLatestStock = async (productName, category) => {
 };
 
 // Fetch product by name and category
-  export const getProductByName = async (name) => {
-    try {
-      // Convert both name and category to lowercase to match backend
-      const response = await axios.get(`${API_BASE_URL}/product/${name.toLowerCase()}}`);
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching product:", error.response?.data || error.message);
-      return null; 
-    }
-  };
+export const getProductByName = async (name) => {
+  try {
+    const cleanedName = name.trim().toLowerCase(); // ✅ Ensure no extra spaces or characters
+
+    console.log("📡 Fetching Product:", `"${cleanedName}"`);
+
+    const response = await axios.get(`${API_BASE_URL}/products/${cleanedName}`);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error fetching product:", error.response?.data || error.message);
+    throw error;
+  }
+};
 
 
 export const addProduct = async (productData) => {

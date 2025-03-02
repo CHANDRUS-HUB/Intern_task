@@ -15,7 +15,7 @@ const DailyConsumption = () => {
 
   // Fetch product details when product name changes
   useEffect(() => {
-    if (productName) {
+    if (productName.length > 2) { // ✅ Prevent searching for very short names
       getProductByName(productName)
         .then((data) => {
           if (data) {
@@ -29,7 +29,7 @@ const DailyConsumption = () => {
         .catch(() => toast.error("❌ Error fetching product details."));
     }
   }, [productName]);
-
+  
   // Recalculate in-hand stock when new stock or consumed stock changes
   useEffect(() => {
     const purchase = Number(newStock) || 0;
