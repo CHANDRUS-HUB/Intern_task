@@ -1,15 +1,14 @@
-const Product = require("../Models/ProductModel"); // ✅ Ensure correct model path
+const Product = require("../Models/ProductModel"); 
 
-// ✅ Get All Products (Optional: Filter by category)
+
 const getProducts = async (req, res) => {
   try {
     const { category } = req.query;
     const filter = category ? { category } : {};
 
-  
     const products = await Product.find(filter)
-      .sort({ createdAt: -1 }) // Show latest first
-      .select("name category old_stock new_stock unit consumed in_hand_stock  createdAt");
+      .sort({ createdAt: -1 }) 
+      .select("name category old_stock new_stock unit consumed in_hand_stock createdAt");
 
     res.json(products);
   } catch (error) {
@@ -18,34 +17,52 @@ const getProducts = async (req, res) => {
   }
 };
 
+//  Add a New Product
+const unitTypes = ["kg", "g", "liter", "ml", "package", "piece", "box", "dozen", "bottle", "can"];
 
-
-// ✅ Add a New Product
 const addProduct = async (req, res) => {
   try {
-    console.log("📩 Incoming Product Data:", req.body); // ✅ Debugging log
+    console.log("📩 Incoming Product Data:", req.body); 
 
-    const { name, category, new_stock, unit, consumed } = req.body;
+    let { name, new_stock, unit, consumed } = req.body;
 
-    if (!name || !category || !new_stock || !unit || !consumed ) {
-      console.log("❌ Missing required fields:", req.body);
-      return res.status(400).json({ error: "❌ Missing required fields." });
+    
+    name = typeof name === "string" ? name.trim() : "";
+
+    
+    new_stock = new_stock !== undefined ? Number(new_stock) : NaN;
+    consumed = consumed !== undefined ? Number(consumed) : NaN;
+
+    
+    const nameRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
+
+    if (!name || !nameRegex.test(name)) {
+      return res.status(400).json({ error: "❌ Invalid product name. Only letters and single spaces allowed." });
+    }
+    if (!unit || !unitTypes.includes(unit)) {
+      return res.status(400).json({ error: "❌ Invalid unit type. Choose from: " + unitTypes.join(", ") });
+    }
+    if (isNaN(new_stock) || isNaN(consumed) || new_stock < 0 || consumed < 0) {
+      return res.status(400).json({ error: "❌ Invalid stock values. Must be numbers >= 0." });
     }
 
-    let product = await Product.findOne({ name, category });
+    
+    let product = await Product.findOne({
+      name: { $regex: new RegExp(`^${name}$`, "i") }
+    });
 
     if (product) {
       return res.status(400).json({ error: "⚠️ Product already exists. Use update instead." });
     }
 
+    
     product = new Product({
       name,
-      category,
-      old_stock: 0,  
-      new_stock: Number(new_stock),  
+      old_stock: 0,
+      new_stock,
       unit,
-      consumed: Number(consumed) || 0, 
-      in_hand_stock: Number(new_stock) - (Number(consumed) || 0), 
+      consumed,
+      in_hand_stock: new_stock - consumed, 
     });
 
     await product.save();
@@ -54,99 +71,108 @@ const addProduct = async (req, res) => {
     res.status(201).json({ success: true, message: "✅ Product added successfully!", data: product });
   } catch (error) {
     console.error("❌ Error adding product:", error);
-    res.status(500).json({ error: "Database error occurred." });
+    res.status(500).json({ error: "❌ Database error occurred." });
   }
 };
 
 
+const unittTypes = ["kg", "g", "liter", "ml", "package", "piece", "box", "dozen", "bottle", "can"]
 
-// ✅ Update an Existing Product by Name
 const updateProductByName = async (req, res) => {
   try {
     console.log("📩 Received Update Request:", req.body);
-    const { name, category, new_purchase, consumed, unit } = req.body;
+    const { name } = req.params; 
+    const { new_stock, consumed, unit } = req.body; 
 
-    let newStock = Number(new_purchase) || 0;
-    let consumedStock = Number(consumed) || 0;
+    
+    if (new_stock === undefined || consumed === undefined || !unit) {
+      return res.status(400).json({ error: "❌ Missing required fields." });
+    }
 
-    // 🔍 Find the latest product entry (case-insensitive search)
-    const lastProduct = await Product.findOne({
-      name: { $regex: new RegExp(`^${name}$`, "i") },
-      category: { $regex: new RegExp(`^${category}$`, "i") }
+    
+    if (!unitTypes.includes(unit)) {
+      return res.status(400).json({ error: "❌ Invalid unit type. Choose from: " + unitTypes.join(", ") });
+    }
+
+    let newStock = Number(new_stock);
+    let consumedStock = Number(consumed);
+
+    
+    if (isNaN(newStock) || isNaN(consumedStock) || newStock < 0 || consumedStock < 0) {
+      return res.status(400).json({ error: "❌ Invalid stock values. Must be numbers >= 0." });
+    }
+
+    
+    const product = await Product.findOne({
+      name: { $regex: new RegExp(`^${name}$`, "i") }
     }).sort({ createdAt: -1 });
 
-    if (!lastProduct) {
-      console.log("❌ Product does not exist. Update request rejected.");
-      return res.status(400).json({ success: false, error: "⚠️ Product does not exist. Please add it first!" });
+    if (!product) {
+      console.log(" Product does not exist. Update request rejected.");
+      return res.status(400).json({ error: " Product does not exist." });
     }
 
-    // ✅ Set old stock to the last recorded in-hand stock
-    let oldStock = lastProduct.in_hand_stock;
+    
+    let oldStock = product.in_hand_stock;
     let finalInHandStock = oldStock + newStock - consumedStock;
 
-    // ❌ Prevent stock going negative
+    
     if (finalInHandStock < 0) {
-      return res.status(400).json({ success: false, error: "❌ Error: Consumption exceeds available stock!" });
+      return res.status(400).json({ error: "❌ Error: Consumption exceeds available stock!" });
     }
 
-    // 🆕 Create a new row instead of updating the existing one
+    
     const newEntry = new Product({
       name,
-      category,
+      category: product.category, 
       unit,
-      old_stock: oldStock,  
+      old_stock: oldStock,
       new_stock: newStock,
       consumed: consumedStock,
       in_hand_stock: finalInHandStock,
-      createdAt: new Date(), 
+      createdAt: new Date(),
     });
 
-    await newEntry.save(); 
-    console.log("✅ New Stock Entry Added:", newEntry);
+    
+    await newEntry.save();
 
+    console.log("✅ Product stock updated successfully:", newEntry);
     res.json({ success: true, message: "✅ Product stock updated successfully!", data: newEntry });
 
   } catch (error) {
-    console.error("❌ Update Error:", error.stack || error); 
-    res.status(500).json({ 
-        success: false, 
-        error: "⚠️ Server error occurred.", 
-        details: error.message,
-        stack: error.stack // This helps in debugging!
-    });
+    console.error("❌ Error updating product:", error);
+    res.status(500).json({ error: "❌ Error updating product stock." });
   }
 };
 
-const getProductByNameAndCategory = async (req, res) => {
+
+const getProductByName = async (req, res) => {
   try {
-    let { name, category } = req.params;
+    let { name } = req.params;
 
-    // Convert to lowercase for case-insensitive matching
+    
     name = name.toLowerCase();
-    category = category.toLowerCase();
 
-    console.log("🔍 Searching for:", { name, category }); // Debugging Log
+    console.log("🔍 Searching for:", { name });
 
-    const product = await Product.findOne({ 
-      name: { $regex: new RegExp(`^${name}$`, "i") }, // Case-insensitive match
-      category: { $regex: new RegExp(`^${category}$`, "i") }
+    
+    const product = await Product.findOne({
+      name: { $regex: new RegExp(`^${name}$`, "i") }, 
     })
-      .sort({ createdAt: -1 })
-      .select("name category in_hand_stock");
+      .sort({ createdAt: -1 }) 
+      .select("name category old_stock new_stock unit consumed in_hand_stock");
 
     if (!product) {
-      console.log("Product not found in DB");
-      return res.status(404).json({ error: "Product not found" });
+      console.log(" Product not found in DB");
+      return res.status(404).json({ error: " Product not found." });
     }
 
     console.log(" Product found:", product);
     res.json(product);
   } catch (error) {
     console.error(" Error fetching product:", error);
-    res.status(500).json({ error: "Error fetching product details" });
+    res.status(500).json({ error: " Error fetching product details." });
   }
 };
 
-
-
-module.exports = { getProducts, addProduct, updateProductByName,getProductByNameAndCategory};
+module.exports = { getProducts, addProduct, updateProductByName, getProductByName };
