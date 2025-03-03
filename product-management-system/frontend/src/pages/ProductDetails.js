@@ -152,27 +152,42 @@ const ViewDetails = () => {
       )}
 
      
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-6">
-          <button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50"
-            disabled={currentPage === 1}
-          >
-            ◀ Prev
-          </button>
+{totalPages > 1 && (
+  <div className="flex justify-center items-center gap-2 mt-6">
+    
+    
+    <button
+      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+      className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50"
+      disabled={currentPage === 1}
+    >
+      ◀ Prev
+    </button>
 
-          <span className="text-lg font-semibold">{`Page ${currentPage} of ${totalPages}`}</span>
+    
+    {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+      <button
+        key={page}
+        onClick={() => setCurrentPage(page)}
+        className={`px-4 py-2 rounded-lg transition ${
+          currentPage === page ? "bg-blue-600 text-white" : "bg-gray-200 hover:bg-gray-300"
+        }`}
+      >
+        {page}
+      </button>
+    ))}
 
-          <button
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50"
-            disabled={currentPage === totalPages}
-          >
-            Next ▶
-          </button>
-        </div>
-      )}
+  
+    <button
+      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+      className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50"
+      disabled={currentPage === totalPages}
+    >
+      Next ▶
+    </button>
+  </div>
+)}
+
     </div>
   );
 };
