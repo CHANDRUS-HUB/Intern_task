@@ -17,7 +17,6 @@ const Navbar = () => (
         {[
           { to: "/", label: "Home" },
           { to: "/add-product", label: "Add Product" },
-          { to: "/daily-consumption", label: "Daily Consumption" },
           { to: "/product-details", label: "View Products" },
         ].map(({ to, label }) => (
           <NavLink

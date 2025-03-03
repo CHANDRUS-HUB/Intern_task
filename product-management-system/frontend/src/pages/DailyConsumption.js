@@ -1,18 +1,36 @@
 import { useState, useEffect } from "react";
-import { getProductByName, updateProduct } from "../api/productApi";
+import { getProductByName, fetchProducts, updateProduct } from "../api/productApi";
 import { toast } from "react-toastify";
 
-const unitTypes = ["kg", "g", "liter", "ml", "package", "piece", "box", "dozen", "bottle", "can"];
-
 const DailyConsumption = () => {
-  
   const [name, setName] = useState(""); 
+  const [products, setProducts] = useState([]); // ✅ Store unique product list
   const [unit, setUnit] = useState("");
   const [oldStock, setOldStock] = useState(0);
   const [newStock, setNewStock] = useState("");
   const [consumed, setConsumed] = useState("");
   const [inHandStock, setInHandStock] = useState(0);
+  const [searchTerm, setSearchTerm] = useState(""); // ✅ Store search input
 
+  // ✅ Fetch all stored product names from the database
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const data = await fetchProducts();
+        if (Array.isArray(data)) {
+          // ✅ Remove duplicates using Set
+          const uniqueProductNames = [...new Set(data.map((p) => p.name))];
+          setProducts(uniqueProductNames);
+        }
+      } catch (error) {
+        console.error("Error fetching product list:", error);
+        toast.error("❌ Error fetching product list.");
+      }
+    };
+    loadProducts();
+  }, []);
+
+  // ✅ Fetch product details when a product is selected
   useEffect(() => {
     if (name.length > 2) { 
       getProductByName(name)
@@ -25,28 +43,30 @@ const DailyConsumption = () => {
             setUnit("");
           }
         })
-        .catch(() => toast.error(" Error fetching product details."));
+        .catch(() => toast.error("❌ Error fetching product details."));
     }
   }, [name]);
 
+  // ✅ Update In-Hand Stock dynamically
   useEffect(() => {
     const purchase = Number(newStock) || 0;
     const consumedQty = Number(consumed) || 0;
     setInHandStock(oldStock + purchase - consumedQty);
   }, [newStock, consumed, oldStock]);
 
+  // ✅ Handle Input Changes
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     if (name === "name") {
       if (!/^[A-Za-z ]*$/.test(value)) {
-        toast.error(" Product name should only contain letters and spaces.");
+        toast.error("❌ Product name should only contain letters and spaces.");
         return;
       }
     }
 
     if ((name === "newStock" || name === "consumed") && (!/^\d*\.?\d*$/.test(value))) {
-      toast.error(" Please enter a valid number.");
+      toast.error("❌ Please enter a valid number.");
       return;
     }
 
@@ -55,19 +75,20 @@ const DailyConsumption = () => {
     if (name === "consumed") setConsumed(value);
   };
 
+  // ✅ Handle Form Submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!name.trim()) {
-      return toast.error(" Please enter a product name.");
+      return toast.error("❌ Please enter a product name.");
     }
 
     if (!unit) {
-      return toast.error(" Please select a unit.");
+      return toast.error("❌ Please select a unit.");
     }
 
     if (Number(consumed) > oldStock + Number(newStock)) {
-      return toast.error(" Consumed quantity cannot exceed available stock.");
+      return toast.error("❌ Consumed quantity cannot exceed available stock.");
     }
 
     const updateData = {
@@ -76,20 +97,20 @@ const DailyConsumption = () => {
       consumed,
     };
 
-    console.log(" Sending update request:", { name, updateData });
+    console.log("📡 Sending update request:", { name, updateData });
 
     try {
       const response = await updateProduct(name, updateData);
-      console.log(" Update Response:", response);
-      toast.success(" Stock updated successfully!");
+      console.log("✅ Update Response:", response);
+      toast.success("✅ Stock updated successfully!");
 
       setName("");
       setNewStock("");
       setConsumed("");
       setInHandStock(0);
     } catch (error) {
-      console.error(" Update Failed:", error);
-      toast.error(` Error updating stock: ${error.response?.data?.error || error.message}`);
+      console.error("❌ Update Failed:", error);
+      toast.error(`⚠️ Error updating stock: ${error.response?.data?.error || error.message}`);
     }
   };
 
@@ -98,17 +119,24 @@ const DailyConsumption = () => {
       <h2 className="text-3xl font-bold mb-6 text-gray-800 text-center">Daily Consumption</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         
+      
+
+        {/* ✅ Dropdown for Unique Product Names */}
         <div>
-          <label className="text-gray-700 font-medium">Product Name</label>
-          <input
-            type="text"
-            name="name"
-            placeholder="Enter product name"
-            value={name}
-            onChange={handleChange}
+          <label className="text-gray-700 font-medium">Select a Product</label>
+          <select
             className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
-            required
-          />
+            onChange={(e) => setName(e.target.value)}
+          >
+            <option value="">Select a Product</option>
+            {products
+              .filter((product) => product.toLowerCase().includes(searchTerm.toLowerCase()))
+              .map((product, index) => (
+                <option key={index} value={product}>
+                  {product}
+                </option>
+              ))}
+          </select>
         </div>
 
         <div>
@@ -152,34 +180,18 @@ const DailyConsumption = () => {
 
         <div>
           <label className="text-gray-700 font-medium">Unit</label>
-          <select 
-            name="unit" 
-            value={unit} 
-            onChange={(e) => setUnit(e.target.value)} 
-            className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
-            required
-          >
-            <option value="">Select Unit</option>
-            {unitTypes.map((unit) => (
-              <option key={unit} value={unit}>{unit}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="text-gray-700 font-medium">In Hand Stock</label>
           <input 
-            type="number" 
-            name="inHandStock" 
-            value={inHandStock} 
-            readOnly 
+            type="text" 
+            name="unit"
+            value={unit}
+            readOnly
             className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 shadow-sm"
           />
         </div>
 
         <button 
           type="submit" 
-          className="w-full bg-purple-600 text-white font-semibold py-3 rounded-lg shadow-md hover:bg-blue-700 transition-all"
+          className="w-full bg-purple-600 text-white font-semibold py-3 rounded-lg shadow-md hover:bg-purple-700 transition-all"
         >
           Update Stock
         </button>

@@ -32,7 +32,7 @@ export const getProductByName = async (name) => {
 
     console.log("📡 Fetching Product:", `"${cleanedName}"`);
 
-    const response = await axios.get(`${API_BASE_URL}/products/${cleanedName}`);
+    const response = await axios.get(`${API_BASE_URL}/product/${cleanedName}`);
     return response.data;
   } catch (error) {
     console.error(" Error fetching product:", error.response?.data || error.message);
@@ -79,7 +79,7 @@ export const updateProduct = async (name, { newStock, unit, consumed }) => {
       throw new Error(" Unit is required!");
     }
 
-    const response = await axios.put(`${API_BASE_URL}/products/update${name.toLowerCase()}`, {
+    const response = await axios.put(`${API_BASE_URL}/products/update/${name.toLowerCase()}`, {
       new_stock: Number(newStock) || 0, 
       unit,
       consumed: Number(consumed) || 0, 
