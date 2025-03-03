@@ -5,18 +5,17 @@ import { toast } from "react-toastify";
 const unitTypes = ["kg", "g", "liter", "ml", "package", "piece", "box", "dozen", "bottle", "can"];
 
 const DailyConsumption = () => {
-  const [category, setCategory] = useState("");
-  const [productName, setProductName] = useState("");
+  
+  const [name, setName] = useState(""); 
   const [unit, setUnit] = useState("");
   const [oldStock, setOldStock] = useState(0);
   const [newStock, setNewStock] = useState("");
   const [consumed, setConsumed] = useState("");
   const [inHandStock, setInHandStock] = useState(0);
 
-  // Fetch product details when product name changes
   useEffect(() => {
-    if (productName.length > 2) { // ✅ Prevent searching for very short names
-      getProductByName(productName)
+    if (name.length > 2) { 
+      getProductByName(name)
         .then((data) => {
           if (data) {
             setOldStock(data.in_hand_stock || 0);
@@ -26,31 +25,49 @@ const DailyConsumption = () => {
             setUnit("");
           }
         })
-        .catch(() => toast.error("❌ Error fetching product details."));
+        .catch(() => toast.error(" Error fetching product details."));
     }
-  }, [productName]);
-  
-  // Recalculate in-hand stock when new stock or consumed stock changes
+  }, [name]);
+
   useEffect(() => {
     const purchase = Number(newStock) || 0;
     const consumedQty = Number(consumed) || 0;
     setInHandStock(oldStock + purchase - consumedQty);
   }, [newStock, consumed, oldStock]);
 
-  // Handle Form Submission
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "name") {
+      if (!/^[A-Za-z ]*$/.test(value)) {
+        toast.error(" Product name should only contain letters and spaces.");
+        return;
+      }
+    }
+
+    if ((name === "newStock" || name === "consumed") && (!/^\d*\.?\d*$/.test(value))) {
+      toast.error(" Please enter a valid number.");
+      return;
+    }
+
+    if (name === "name") setName(value);
+    if (name === "newStock") setNewStock(value);
+    if (name === "consumed") setConsumed(value);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!productName) {
-      return toast.error("❌ Please enter a product name.");
+    if (!name.trim()) {
+      return toast.error(" Please enter a product name.");
     }
 
     if (!unit) {
-      return toast.error("❌ Please select a unit.");
+      return toast.error(" Please select a unit.");
     }
 
     if (Number(consumed) > oldStock + Number(newStock)) {
-      return toast.error("❌ Consumed quantity cannot exceed available stock.");
+      return toast.error(" Consumed quantity cannot exceed available stock.");
     }
 
     const updateData = {
@@ -59,76 +76,111 @@ const DailyConsumption = () => {
       consumed,
     };
 
-    console.log("📡 Sending update request:", { productName, updateData });
+    console.log(" Sending update request:", { name, updateData });
 
     try {
-      const response = await updateProduct(productName, updateData);
-      console.log("🟢 Update Response:", response);
-      toast.success("✅ Stock updated successfully!");
+      const response = await updateProduct(name, updateData);
+      console.log(" Update Response:", response);
+      toast.success(" Stock updated successfully!");
 
-      // Reset form fields
-      setProductName("");
+      setName("");
       setNewStock("");
       setConsumed("");
       setInHandStock(0);
     } catch (error) {
-      console.error("❌ Update Failed:", error);
-      toast.error(`⚠️ Error updating stock: ${error.response?.data?.error || error.message}`);
+      console.error(" Update Failed:", error);
+      toast.error(` Error updating stock: ${error.response?.data?.error || error.message}`);
     }
   };
 
   return (
-    <div className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-4 text-gray-700">Daily Consumption</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <label className="text-b text-gray-600"> Product Name</label>
-        <input
-          type="text"
-          name="productName"
-          placeholder="Product Name"
-          value={productName}
-          onChange={(e) => setProductName(e.target.value)}
-          className="w-full p-2 border rounded mt-2"
-          required
-        />
+    <div className="max-w-lg mx-auto mt-12 p-8 bg-white rounded-lg shadow-lg">
+      <h2 className="text-3xl font-bold mb-6 text-gray-800 text-center">Daily Consumption</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        
+        <div>
+          <label className="text-gray-700 font-medium">Product Name</label>
+          <input
+            type="text"
+            name="name"
+            placeholder="Enter product name"
+            value={name}
+            onChange={handleChange}
+            className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
+            required
+          />
+        </div>
 
-        <label className="text-b text-gray-600 mt-2">Old Stock</label>
-        <input type="number" name="oldStock" value={oldStock} readOnly className="w-full p-2 border rounded bg-gray-100" />
+        <div>
+          <label className="text-gray-700 font-medium">Old Stock</label>
+          <input 
+            type="number" 
+            name="oldStock" 
+            value={oldStock} 
+            readOnly 
+            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 shadow-sm"
+          />
+        </div>
 
-        <label className="text-b text-gray-600">New Stock Quantity</label>
-        <input
-          type="number"
-          name="newStock"
-          placeholder="New Stock Quantity"
-          value={newStock}
-          onChange={(e) => setNewStock(e.target.value)}
-          className="w-full p-2 border rounded"
-          required
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-gray-700 font-medium">New Stock Quantity</label>
+            <input
+              type="number"
+              name="newStock"
+              placeholder="Enter quantity"
+              value={newStock}
+              onChange={handleChange}
+              className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
+              required
+            />
+          </div>
 
-        <label className="text-b text-gray-600">Today's Consumption</label>
-        <input
-          type="number"
-          name="consumed"
-          placeholder="Today's Consumption"
-          value={consumed}
-          onChange={(e) => setConsumed(e.target.value)}
-          className="w-full p-2 border rounded"
-          required
-        />
+          <div>
+            <label className="text-gray-700 font-medium">Today's Consumption</label>
+            <input
+              type="number"
+              name="consumed"
+              placeholder="Enter consumed amount"
+              value={consumed}
+              onChange={handleChange}
+              className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
+              required
+            />
+          </div>
+        </div>
 
-        <label className="text-b text-gray-600">Unit</label>
-        <select name="unit" value={unit} onChange={(e) => setUnit(e.target.value)} className="w-full p-2 border rounded" required>
-          <option value="">Select Unit</option>
-          {unitTypes.map((unit) => (
-            <option key={unit} value={unit}>{unit}</option>
-          ))}
-        </select>
+        <div>
+          <label className="text-gray-700 font-medium">Unit</label>
+          <select 
+            name="unit" 
+            value={unit} 
+            onChange={(e) => setUnit(e.target.value)} 
+            className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
+            required
+          >
+            <option value="">Select Unit</option>
+            {unitTypes.map((unit) => (
+              <option key={unit} value={unit}>{unit}</option>
+            ))}
+          </select>
+        </div>
 
-        <label className="text-b text-gray-600">In Hand Stock</label>
-        <input type="number" name="inHandStock" value={inHandStock} readOnly className="w-full p-2 border rounded bg-gray-100" />
+        <div>
+          <label className="text-gray-700 font-medium">In Hand Stock</label>
+          <input 
+            type="number" 
+            name="inHandStock" 
+            value={inHandStock} 
+            readOnly 
+            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 shadow-sm"
+          />
+        </div>
 
-        <button type="submit" className="w-full bg-green-600 text-white p-2 rounded">
+        <button 
+          type="submit" 
+          className="w-full bg-purple-600 text-white font-semibold py-3 rounded-lg shadow-md hover:bg-blue-700 transition-all"
+        >
           Update Stock
         </button>
       </form>

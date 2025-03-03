@@ -8,16 +8,16 @@ const connectDB = async () => {
   const connectWithRetry = async () => {
     try {
       await mongoose.connect(process.env.MONGO_URI);
-      console.log("✅ MongoDB connected successfully!");
+      console.log(" MongoDB connected successfully!");
     } catch (error) {
       attempts++;
-      console.error(`❌ MongoDB connection attempt ${attempts} failed:`, error.message);
+      console.error(` MongoDB connection attempt ${attempts} failed:`, error.message);
 
       if (attempts < maxRetries) {
-        console.log("⏳ Retrying in 5 seconds...");
+        console.log("Retrying in 5 seconds...");
         setTimeout(connectWithRetry, 5000);
       } else {
-        console.error("❌ Max connection attempts reached. Exiting...");
+        console.error(" Max connection attempts reached. Exiting...");
         process.exit(1);
       }
     }

@@ -1,7 +1,7 @@
 import axios from "axios";
-const API_BASE_URL = "http://localhost:4000"; // Ensure this URL is correct!
+const API_BASE_URL = "http://localhost:4000"; 
 
-// Fetch products with optional category filter
+
 export const fetchProducts = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/products`);
@@ -13,7 +13,7 @@ export const fetchProducts = async () => {
   }
 };
 
-// Fetch product's latest stock by name and category
+
 export const fetchLatestStock = async (productName, category) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/product/${productName.toLowerCase()}/${category.toLowerCase()}`);
@@ -21,21 +21,21 @@ export const fetchLatestStock = async (productName, category) => {
     return response.data;
   } catch (error) {
     console.error("Error fetching latest stock:", error.response?.data || error.message);
-    return null; // Return null in case of error
+    return null; 
   }
 };
 
-// Fetch product by name and category
+
 export const getProductByName = async (name) => {
   try {
-    const cleanedName = name.trim().toLowerCase(); // ✅ Ensure no extra spaces or characters
+    const cleanedName = name.trim().toLowerCase(); 
 
     console.log("📡 Fetching Product:", `"${cleanedName}"`);
 
     const response = await axios.get(`${API_BASE_URL}/products/${cleanedName}`);
     return response.data;
   } catch (error) {
-    console.error("❌ Error fetching product:", error.response?.data || error.message);
+    console.error(" Error fetching product:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -43,7 +43,7 @@ export const getProductByName = async (name) => {
 
 export const addProduct = async (productData) => {
   try {
-    console.log("📤 Sending Product Data:", productData);
+    console.log(" Sending Product Data:", productData);
 
     const response = await axios.post(`${API_BASE_URL}/add-product`, {
       name: productData.name.trim(), 
@@ -52,10 +52,10 @@ export const addProduct = async (productData) => {
       consumed: Number(productData.consumed), 
     });
 
-    console.log("✅ Product added:", response.data);
+    console.log(" Product added:", response.data);
     return response.data;
   } catch (error) {
-    console.error("❌ Error adding product:", error.response?.data || error.message);
+    console.error(" Error adding product:", error.response?.data || error.message);
     throw error; 
   }
 };
@@ -73,22 +73,22 @@ export const checkProductExists = async (name, category) => {
 
 export const updateProduct = async (name, { newStock, unit, consumed }) => {
   try {
-    console.log("📡 Sending update request:", { name, newStock, unit, consumed });
+    console.log(" Sending update request:", { name, newStock, unit, consumed });
 
     if (!unit) {
-      throw new Error("⚠️ Unit is required!");
+      throw new Error(" Unit is required!");
     }
 
-    const response = await axios.put(`${API_BASE_URL}/products/${name.toLowerCase()}`, {
-      new_stock: Number(newStock) || 0, // ✅ Convert to number
+    const response = await axios.put(`${API_BASE_URL}/products/update${name.toLowerCase()}`, {
+      new_stock: Number(newStock) || 0, 
       unit,
-      consumed: Number(consumed) || 0, // ✅ Convert to number
+      consumed: Number(consumed) || 0, 
     });
 
-    console.log("✅ Update success:", response.data);
+    console.log(" Update success:", response.data);
     return response.data;
   } catch (error) {
-    console.error("❌ API Update Failed:", error.response?.data || error.message);
+    console.error(" API Update Failed:", error.response?.data || error.message);
     throw error;
   }
 };

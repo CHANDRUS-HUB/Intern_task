@@ -12,17 +12,17 @@ const getProducts = async (req, res) => {
 
     res.json(products);
   } catch (error) {
-    console.error("❌ Error fetching products:", error);
+    console.error("Error fetching products:", error);
     res.status(500).json({ error: "Database error occurred." });
   }
 };
 
-//  Add a New Product
+
 const unitTypes = ["kg", "g", "liter", "ml", "package", "piece", "box", "dozen", "bottle", "can"];
 
 const addProduct = async (req, res) => {
   try {
-    console.log("📩 Incoming Product Data:", req.body); 
+    console.log(" Incoming Product Data:", req.body); 
 
     let { name, new_stock, unit, consumed } = req.body;
 
@@ -37,13 +37,13 @@ const addProduct = async (req, res) => {
     const nameRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
 
     if (!name || !nameRegex.test(name)) {
-      return res.status(400).json({ error: "❌ Invalid product name. Only letters and single spaces allowed." });
+      return res.status(400).json({ error: " Invalid product name. Only letters and single spaces allowed." });
     }
     if (!unit || !unitTypes.includes(unit)) {
-      return res.status(400).json({ error: "❌ Invalid unit type. Choose from: " + unitTypes.join(", ") });
+      return res.status(400).json({ error: " Invalid unit type. Choose from: " + unitTypes.join(", ") });
     }
     if (isNaN(new_stock) || isNaN(consumed) || new_stock < 0 || consumed < 0) {
-      return res.status(400).json({ error: "❌ Invalid stock values. Must be numbers >= 0." });
+      return res.status(400).json({ error: " Invalid stock values. Must be numbers >= 0." });
     }
 
     
@@ -52,7 +52,7 @@ const addProduct = async (req, res) => {
     });
 
     if (product) {
-      return res.status(400).json({ error: "⚠️ Product already exists. Use update instead." });
+      return res.status(400).json({ error: " Product already exists. Use update instead." });
     }
 
     
@@ -66,12 +66,12 @@ const addProduct = async (req, res) => {
     });
 
     await product.save();
-    console.log("✅ Product added successfully:", product);
+    console.log(" Product added successfully:", product);
 
-    res.status(201).json({ success: true, message: "✅ Product added successfully!", data: product });
+    res.status(201).json({ success: true, message: " Product added successfully!", data: product });
   } catch (error) {
-    console.error("❌ Error adding product:", error);
-    res.status(500).json({ error: "❌ Database error occurred." });
+    console.error(" Error adding product:", error);
+    res.status(500).json({ error: " Database error occurred." });
   }
 };
 
@@ -80,18 +80,18 @@ const addProduct = async (req, res) => {
 
 const updateProductByName = async (req, res) => {
   try {
-    console.log("📩 Received Update Request:", req.body);
+    console.log("Received Update Request:", req.body);
     const { name } = req.params; 
     const { new_stock, consumed, unit } = req.body; 
 
     
     if (new_stock === undefined || consumed === undefined || !unit) {
-      return res.status(400).json({ error: "❌ Missing required fields." });
+      return res.status(400).json({ error: " Missing required fields." });
     }
 
     
     if (!unitTypes.includes(unit)) {
-      return res.status(400).json({ error: "❌ Invalid unit type. Choose from: " + unitTypes.join(", ") });
+      return res.status(400).json({ error: " Invalid unit type. Choose from: " + unitTypes.join(", ") });
     }
 
     let newStock = Number(new_stock);
@@ -99,7 +99,7 @@ const updateProductByName = async (req, res) => {
 
     
     if (isNaN(newStock) || isNaN(consumedStock) || newStock < 0 || consumedStock < 0) {
-      return res.status(400).json({ error: "❌ Invalid stock values. Must be numbers >= 0." });
+      return res.status(400).json({ error: " Invalid stock values. Must be numbers >= 0." });
     }
 
     
@@ -118,7 +118,7 @@ const updateProductByName = async (req, res) => {
 
     
     if (finalInHandStock < 0) {
-      return res.status(400).json({ error: "❌ Error: Consumption exceeds available stock!" });
+      return res.status(400).json({ error: " Error: Consumption exceeds available stock!" });
     }
 
     
@@ -136,12 +136,12 @@ const updateProductByName = async (req, res) => {
     
     await newEntry.save();
 
-    console.log("✅ Product stock updated successfully:", newEntry);
-    res.json({ success: true, message: "✅ Product stock updated successfully!", data: newEntry });
+    console.log(" Product stock updated successfully:", newEntry);
+    res.json({ success: true, message: " Product stock updated successfully!", data: newEntry });
 
   } catch (error) {
-    console.error("❌ Error updating product:", error);
-    res.status(500).json({ error: "❌ Error updating product stock." });
+    console.error(" Error updating product:", error);
+    res.status(500).json({ error: " Error updating product stock." });
   }
 };
 

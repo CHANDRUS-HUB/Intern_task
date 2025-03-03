@@ -22,23 +22,23 @@ const categoryKeywords = {
   health_supplements: ['vitamins', 'protein powder', 'omega-3', 'multivitamins', 'fish oil', 'probiotics', 'creatine']
 };
 
-// Define the Product schema
+
 const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    category: { type: String, required: false }, // Will be auto-detected
+    category: { type: String, required: false }, 
     old_stock: { type: Number, default: 0 },
     new_stock: { type: Number, default: 0 },
     unit: { type: String, required: true },
     consumed: { type: Number, default: 0 },
-    in_hand_stock: { type: Number, default: 0 } // Store in-hand stock in the database
+    in_hand_stock: { type: Number, default: 0 } 
   },
   { timestamps: true }
 );
 
-// Middleware to automatically assign category and calculate in-hand stock
+
 productSchema.pre('validate', function (next) {
-  if (!this.category) { // Only assign category if it's not already set
+  if (!this.category) { 
     const productName = this.name.toLowerCase();
     let matchedCategory = "General";
 
@@ -52,13 +52,12 @@ productSchema.pre('validate', function (next) {
     this.category = matchedCategory;
   }
 
-  // Automatically calculate in-hand stock before saving
   this.in_hand_stock = this.old_stock + this.new_stock - this.consumed;
 
-  next(); // ✅ Correctly closing the middleware function
+  next(); 
 });
 
-// Create the Product model
+
 const Product = mongoose.model("Product", productSchema);
 
 module.exports = Product;
