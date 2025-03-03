@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchProducts } from "../api/productApi";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const ViewDetails = () => {
   const [products, setProducts] = useState([]);
@@ -22,7 +23,7 @@ const ViewDetails = () => {
         setProducts(Array.isArray(data) ? data : []);
         setFilteredProducts(Array.isArray(data) ? data : []);
 
-        
+       
         const uniqueNames = [...new Set(data.map((product) => product.name))];
         setUniqueProductNames(uniqueNames);
       } catch (error) {
@@ -36,7 +37,19 @@ const ViewDetails = () => {
     loadProducts();
   }, []);
 
- 
+  
+  const handleSearch = (e) => {
+    const value = e.target.value;
+
+    
+    if (/\d/.test(value)) {
+      toast.error("Product name should not contain numbers.");
+      return;
+    }
+
+    setSearchTerm(value);
+  };
+
   useEffect(() => {
     if (searchTerm.trim() === "") {
       setFilteredProducts(products);
@@ -49,7 +62,6 @@ const ViewDetails = () => {
     }
   }, [searchTerm, products]);
 
-  
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const paginatedProducts = filteredProducts.slice(
     (currentPage - 1) * itemsPerPage,
@@ -76,7 +88,7 @@ const ViewDetails = () => {
           type="text"
           placeholder="Search by product name..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={handleSearch}  
           className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
         />
 
@@ -136,10 +148,10 @@ const ViewDetails = () => {
           </table>
         </div>
       ) : (
-        !loading && <p className="text-center text-gray-500">No products available.</p>
+        !loading && <p className="text-center text-gray-800 ">No products available.</p>
       )}
 
-      {/* ✅ Pagination Controls */}
+     
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 mt-6">
           <button
