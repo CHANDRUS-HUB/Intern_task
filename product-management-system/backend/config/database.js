@@ -1,29 +1,31 @@
-const mongoose = require("mongoose");
+const mysql = require("mysql2/promise");
 require("dotenv").config();
 
-const connectDB = async () => {
-  let attempts = 0;
-  const maxRetries = 5;
+const pool = mysql.createPool({
+  host: process.env.MYSQL_HOST,       
+  user: process.env.MYSQL_USER,      
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE, 
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+});
 
-  const connectWithRetry = async () => {
-    try {
-      await mongoose.connect(process.env.MONGO_URI);
-      console.log(" MongoDB connected successfully!");
-    } catch (error) {
-      attempts++;
-      console.error(` MongoDB connection attempt ${attempts} failed:`, error.message);
+pool.getConnection()
+  .then((connection) => {
+    console.log(" MySQL Connected Successfully!");
+    connection.release();
+  })
+  .catch((err) => {
+    console.error("MySQL Connection Failed:", err);
+  });
 
-      if (attempts < maxRetries) {
-        console.log("Retrying in 5 seconds...");
-        setTimeout(connectWithRetry, 5000);
-      } else {
-        console.error(" Max connection attempts reached. Exiting...");
-        process.exit(1);
-      }
-    }
-  };
 
-  connectWithRetry();
-};
+process.on("SIGINT", async () => {
+  console.log(" Closing MySQL Connection ...");
+  await pool.end();
+  console.log(" MySQL Connection  Closed.");
+  process.exit(0);
+});
 
-module.exports = connectDB;
+module.exports = pool;

@@ -9,7 +9,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-connectDB();  
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/", productRoutes);
 
@@ -21,7 +21,7 @@ app.get('*', cors(), (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT ;
 app.listen(PORT, () => console.log(` Server running on port ${PORT}`));
 
 module.exports = app;

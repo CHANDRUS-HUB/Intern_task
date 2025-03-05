@@ -18,7 +18,7 @@ const Navbar = () => {
           </span>
         </NavLink>
 
-        {/* Desktop Navigation */}
+       
         <div className="hidden md:flex space-x-8">
           {[
             { to: "/", label: "Home" },
@@ -42,7 +42,7 @@ const Navbar = () => {
           ))}
         </div>
 
-        {/* Mobile Menu Button */}
+       
         <button
           className="md:hidden text-gray-700 hover:text-purple-700"
           onClick={() => setIsOpen(!isOpen)}
@@ -51,7 +51,7 @@ const Navbar = () => {
         </button>
       </div>
 
-      {/* Mobile Dropdown Menu */}
+     
       {isOpen && (
         <div className="md:hidden bg-white shadow-md absolute top-full left-0 w-full py-4">
           <div className="flex flex-col space-y-3 px-6">

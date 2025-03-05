@@ -121,7 +121,7 @@ const AddProduct = () => {
       setProduct({ name: "", category: "", quantity: "", unit: "", consumed: "" });
     } catch (error) {
       console.error("API Error:", error.response?.data || error.message);
-      toast.error(" Error adding product.");
+      toast.error(" Error adding product.",error.message);
     } finally {
       setLoading(false);
     }
