@@ -154,7 +154,7 @@ const AddProduct = () => {
           </div>
         )}
 
-        {/* Quantity Input */}
+
         <div>
           <label className="text-gray-700 font-medium">Quantity</label>
           <input
