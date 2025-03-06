@@ -69,63 +69,112 @@ const getProductByDetails = async (req, res) => {
 
 
 
+const detectCategory = async (productName) => {
+
+  const [rows] = await pool.execute(`
+    SELECT c.id AS category_id, c.name AS category_name, k.keyword
+    FROM keywords k
+    JOIN categories c ON k.category_id = c.id
+  `);
+  
+ 
+  for (const row of rows) {
+    if (productName.toLowerCase().includes(row.keyword.toLowerCase())) {
+     
+      return { id: row.category_id, name: row.category_name };
+    }
+  }
+  
+
+  return { id: 1, name: "Other" };
+};
+
 const addProduct = async (req, res) => {
   try {
-      console.log("Received data:", req.body);
+    console.log("Received data:", req.body);
 
-      const { name, category, new_stock, unit, consumed, inHandStock } = req.body;
-      const in_hand_stock = inHandStock;
-      const missingFields = [];
-      
-      if (!name) missingFields.push("name");
-      if (!category) missingFields.push("category");
-      if (new_stock === undefined) missingFields.push("new_stock");
-      if (!unit) missingFields.push("unit");
-      if (consumed === undefined) missingFields.push("consumed");
-      if (in_hand_stock === undefined) missingFields.push("in_hand_stock");
+    const { name, new_stock, unit, consumed } = req.body;
+    if (!name || new_stock === undefined || !unit || consumed === undefined) {
+      return res.status(400).json({ error: "Missing required fields." });
+    }
 
-      if (missingFields.length > 0) {
-          return res.status(400).json({ error: `Missing fields: ${missingFields.join(", ")}` });
-      }
+    
+    const detected = await detectCategory(name);
+    const category_id = detected.id;
+    const categoryName = detected.name;
 
-      const checkQuery = `SELECT * FROM products WHERE name = ? AND category = ? AND unit = ?`;
-      const [existingProducts] = await pool.execute(checkQuery, [name, category, unit]);
-
-      if (existingProducts.length > 0) {
-          return res.status(400).json({ error: "Product with the same name and unit already exists!" });
-      }
    
-      const query = `INSERT INTO products (name, category, new_stock, unit, consumed, in_hand_stock, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`;
-      const createdAt = new Date().toISOString().slice(0, 19).replace("T", " ");
-      
-      await pool.execute(query, [name, category, new_stock, unit, consumed, in_hand_stock, createdAt]);
+    const [allowedRows] = await pool.execute(
+      "SELECT unit FROM units WHERE category_id = ?",
+      [category_id]
+    );
+    const allowedUnits = allowedRows.map(row => row.unit.toLowerCase());
+    if (!allowedUnits.includes(unit.toLowerCase())) {
+      return res.status(400).json({
+        error: `Unit '${unit}' is not allowed for category '${categoryName}'. Allowed units are: ${allowedUnits.join(", ")}`
+      });
+    }
 
-      res.status(201).json({ message: "Product added successfully!" });
+   
+    const checkQuery = `
+      SELECT in_hand_stock FROM products 
+      WHERE name = ? AND unit = ? 
+      ORDER BY created_at DESC LIMIT 1
+    `;
+    const [existingProducts] = await pool.execute(checkQuery, [name, unit]);
+    const old_stock = existingProducts.length > 0 ? existingProducts[0].in_hand_stock : 0;
 
+    // Calculate new in-hand stock automatically
+    const in_hand_stock = old_stock + new_stock - consumed;
+
+  
+    const query = `
+      INSERT INTO products (name, category, category_id, old_stock, new_stock, unit, consumed, in_hand_stock, created_at) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    const createdAt = new Date().toISOString().slice(0, 19).replace("T", " ");
+    await pool.execute(query, [name, categoryName, category_id, old_stock, new_stock, unit, consumed, in_hand_stock, createdAt]);
+
+    res.status(201).json({ message: "Product added successfully!", category: categoryName, category_id, in_hand_stock });
   } catch (error) {
-      console.error("Error adding product:", error);
-      res.status(500).json({ error: "Internal Server Error" });
+    console.error("Error adding product:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+
+const fetchProducts = async (category) => {
+  try {
+    const response = await axios.get(`http://localhost:5000/products/${category}`);
+    console.log("Fetched Products:", response.data); 
+    setProducts(response.data);
+  } catch (error) {
+    console.error("Error fetching products:", error);
   }
 };
 
 
 
 
-
 const updateProductByName = async (req, res) => {
   try {
+    let { name, category, unit } = req.params;
+    let { new_stock, consumed } = req.body;
 
-    const { name, category, unit } = req.params;
-    const { new_stock, consumed } = req.body;
+    // Trim & Sanitize Inputs
+    name = name.trim();
+    category = category.trim();
+    unit = unit.trim();
 
     console.log("Received Params:", { name, category, unit });
     console.log("Received Body:", { new_stock, consumed });
 
-    // Validate required fields
+    // Validate Required Fields
     if (!name || !category || !unit || new_stock === undefined || consumed === undefined) {
       return res.status(400).json({ error: "Missing required fields." });
     }
 
+    // Convert & Validate Numbers
     const newStockNumber = Number(new_stock);
     const consumedNumber = Number(consumed);
 
@@ -133,12 +182,12 @@ const updateProductByName = async (req, res) => {
       return res.status(400).json({ error: "Invalid stock values. Must be numbers >= 0." });
     }
 
- 
+    // Fetch the Latest Product Record
     const [rows] = await pool.execute(
-      `SELECT * FROM products 
-       WHERE LOWER(name) = LOWER(?) 
-         AND LOWER(category) = LOWER(?) 
-         AND LOWER(unit) = LOWER(?)
+      `SELECT id, in_hand_stock, category_id FROM products 
+       WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) 
+         AND LOWER(TRIM(category)) = LOWER(TRIM(?)) 
+         AND LOWER(TRIM(unit)) = LOWER(TRIM(?))
        ORDER BY created_at DESC LIMIT 1`,
       [name, category, unit]
     );
@@ -157,24 +206,33 @@ const updateProductByName = async (req, res) => {
       return res.status(400).json({ error: "Consumption exceeds available stock." });
     }
 
-   
-    await pool.execute(
-      "UPDATE products SET old_stock = ?, new_stock = ?, consumed = ?, in_hand_stock = ? WHERE id = ?",
-      [oldStock, newStockNumber, consumedNumber, finalInHandStock, product.id]
-    );
+    // Insert New Record with Updated Stock
+    const insertQuery = `
+      INSERT INTO products 
+      (name, category, category_id, old_stock, new_stock, unit, consumed, in_hand_stock, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+    `;
+    await pool.execute(insertQuery, [
+      name,
+      category,
+      product.category_id, // Ensure this is available
+      oldStock,
+      newStockNumber,
+      unit,
+      consumedNumber,
+      finalInHandStock
+    ]);
 
-    return res.status(200).json({
-      message: "Product updated successfully!",
+    return res.status(201).json({
+      message: "Stock updated successfully!",
       updatedProduct: {
-        id: product.id,
         name,
-        category: product.category,
+        category,
         unit,
         old_stock: oldStock,
         new_stock: newStockNumber,
         consumed: consumedNumber,
         in_hand_stock: finalInHandStock,
-        updatedAt: new Date(),
       },
     });
   } catch (error) {
@@ -188,5 +246,5 @@ module.exports = {
   getProducts,
   addProduct,
   updateProductByName,
-  getProductByDetails,
+  getProductByDetails,fetchProducts 
 };

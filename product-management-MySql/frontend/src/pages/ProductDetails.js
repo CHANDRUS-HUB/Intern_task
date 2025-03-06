@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchProducts } from "../api/productApi";
+import {  getProducts } from "../api/productApi";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
@@ -18,7 +18,7 @@ const ViewDetails = () => {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const data = await fetchProducts();
+        const data = await getProducts();
         console.log("Fetched products:", data);
         setProducts(Array.isArray(data) ? data : []);
         setFilteredProducts(Array.isArray(data) ? data : []);
