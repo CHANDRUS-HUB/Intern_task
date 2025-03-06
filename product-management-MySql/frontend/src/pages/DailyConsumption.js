@@ -52,7 +52,7 @@ const DailyConsumption = () => {
           toast.error("❌ Error fetching product details.");
         }
       }
-    }, 500),
+    }, ),
     []
   );
 

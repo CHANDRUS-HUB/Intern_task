@@ -57,6 +57,18 @@ export const updateProduct = async (name, category, unit, updateData) => {
 
 
 export const getProductByName = async (name) => {
-  const response = await fetch(`/product/${name}`);
-  return response.data;
+  try {
+    const response = await fetch(`http://localhost:5000/product/${encodeURIComponent(name)}`);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch product: ${response.statusText}`);
+    }
+
+    const data = await response.json(); // Correct way to parse JSON response
+    return data;
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    return null; // Handle errors gracefully
+  }
 };
+
