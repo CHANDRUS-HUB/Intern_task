@@ -26,31 +26,29 @@ export const addProduct = async (productData) => {
 export const updateProduct = async (name, category, unit, updateData) => {
   try {
     const response = await fetch(
-      `http://localhost:5000/update/${encodeURIComponent(name)}/${encodeURIComponent(category)}/${encodeURIComponent(unit)}`,
+      `/update-product?name=${name}&category=${category}&unit=${unit}`,
       {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(updateData),
       }
     );
 
-    let data;
-    try {
-      data = await response.json(); // Attempt to parse JSON response
-    } catch {
-      throw new Error(`Failed to parse server response.`);
-    }
-
+    const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.error || `Failed to update product: ${response.statusText}`);
+      throw new Error(data.error || "Something went wrong.");
     }
 
     return data;
   } catch (error) {
-    console.error("Update error:", error.message);
+    console.error("Error updating product:", error.message);
     throw error;
   }
 };
+
+
 
 
 

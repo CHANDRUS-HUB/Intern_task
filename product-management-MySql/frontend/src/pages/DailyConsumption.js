@@ -22,6 +22,8 @@ const DailyConsumption = () => {
         const data = await getProducts();
         if (Array.isArray(data)) {
           setProducts(data);
+
+          // Extract unique categories
           const uniqueCategories = [...new Set(data.map(product => product.category))];
           setCategories(uniqueCategories);
         }
@@ -33,36 +35,39 @@ const DailyConsumption = () => {
     loadProducts();
   }, []);
 
-  // Fetch product details based on name, category, and unit
+  // Fetch product details based on name
   const fetchProductDetails = useCallback(
-    debounce(async (productName, productCategory, productUnit) => {
-      if (productName && productCategory && productUnit) {
-        try {
-          const data = await getProductByName(productName, productCategory, productUnit);
-          if (data) {
-            setOldStock(data.in_hand_stock || 0);
-            setUnit(data.unit || "");
-            setInHandStock(data.in_hand_stock || 0); // Auto-update in-hand stock initially
-          } else {
-            setOldStock(0);
-            setUnit("");
-            setInHandStock(0);
-          }
-        } catch {
-          toast.error("❌ Error fetching product details.");
+    debounce(async (productName) => {
+      if (!productName) return;
+
+      try {
+        const data = await getProductByName(productName);
+        if (data) {
+          setOldStock(data.in_hand_stock || 0);
+          setUnit(data.unit || "");
+          setCategory(data.category || "");
+          setInHandStock(data.in_hand_stock || 0);
+        } else {
+          setOldStock(0);
+          setUnit("");
+          setCategory("");
+          setInHandStock(0);
         }
+      } catch (error) {
+        toast.error("❌ Error fetching product details.");
       }
-    }, ),
+    }, 500),
     []
   );
 
+  // Trigger fetch when product name changes
   useEffect(() => {
-    if (name && category && unit) {
-      fetchProductDetails(name, category, unit);
+    if (name) {
+      fetchProductDetails(name);
     }
-  }, [name, category, unit, fetchProductDetails]);
+  }, [name, fetchProductDetails]);
 
-  // Calculate in-hand stock
+  // Auto-calculate in-hand stock
   useEffect(() => {
     const purchase = Number(newStock) || 0;
     const consumedQty = Number(consumed) || 0;
@@ -79,14 +84,20 @@ const DailyConsumption = () => {
       setConsumed("");
       setInHandStock(0);
     }
+
     if (name === "category") {
       setCategory(value);
       setNewStock("");
       setConsumed("");
       setInHandStock(0);
-      const selectedUnits = products.filter(product => product.category === value).map(product => product.unit);
+
+      // Update available units based on the selected category
+      const selectedUnits = products
+        .filter(product => product.category === value)
+        .map(product => product.unit);
       setUnits([...new Set(selectedUnits)]);
     }
+
     if (name === "unit") {
       setUnit(value);
       setNewStock("");
@@ -133,6 +144,7 @@ const DailyConsumption = () => {
     <div className="max-w-lg mx-auto mt-12 p-8 bg-white rounded-lg shadow-lg">
       <h2 className="text-3xl font-bold mb-6 text-gray-800 text-center">Daily Consumption</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Product Selection */}
         <div>
           <label className="text-gray-700 font-medium">Select a Product</label>
           <select name="name" value={name} onChange={handleChange} className="w-full p-3 border rounded-lg">
@@ -143,6 +155,7 @@ const DailyConsumption = () => {
           </select>
         </div>
 
+        {/* Category Selection */}
         <div>
           <label className="text-gray-700 font-medium">Category</label>
           <select name="category" value={category} onChange={handleChange} className="w-full p-3 border rounded-lg">
@@ -153,6 +166,7 @@ const DailyConsumption = () => {
           </select>
         </div>
 
+        {/* Unit Selection */}
         <div>
           <label className="text-gray-700 font-medium">Unit</label>
           <select name="unit" value={unit} onChange={handleChange} className="w-full p-3 border rounded-lg">
@@ -163,21 +177,25 @@ const DailyConsumption = () => {
           </select>
         </div>
 
+        {/* Old Stock */}
         <div>
           <label className="text-gray-700 font-medium">Old Stock</label>
           <input type="number" value={oldStock} readOnly className="w-full p-3 border rounded-lg bg-gray-100" />
         </div>
 
+        {/* New Stock & Consumption */}
         <div className="grid grid-cols-2 gap-4">
           <input type="number" name="newStock" value={newStock} onChange={handleChange} placeholder="New Stock" className="w-full p-3 border rounded-lg" />
           <input type="number" name="consumed" value={consumed} onChange={handleChange} placeholder="Consumption" className="w-full p-3 border rounded-lg" />
         </div>
 
+        {/* In-Hand Stock */}
         <div>
           <label className="text-gray-700 font-medium">In-Hand Stock</label>
           <input type="number" value={inHandStock} readOnly className="w-full p-3 border rounded-lg bg-gray-100" />
         </div>
 
+        {/* Submit Button */}
         <button type="submit" className="w-full bg-purple-600 text-white py-3 rounded-lg">Update Stock</button>
       </form>
     </div>
