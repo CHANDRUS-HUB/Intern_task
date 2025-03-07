@@ -155,19 +155,10 @@ const fetchProducts = async (category) => {
 
 
 
-
 const updateProductByName = async (req, res) => {
   try {
-    let { name, category, unit } = req.params;
-    let { new_stock, consumed } = req.body;
-
-    // Trim & Sanitize Inputs
-    name = name.trim();
-    category = category.trim();
-    unit = unit.trim();
-
-    console.log("Received Params:", { name, category, unit });
-    console.log("Received Body:", { new_stock, consumed });
+    const { name, category, unit } = req.params;
+    const { new_stock, consumed } = req.body;
 
     // Validate Required Fields
     if (!name || !category || !unit || new_stock === undefined || consumed === undefined) {
@@ -192,8 +183,6 @@ const updateProductByName = async (req, res) => {
       [name, category, unit]
     );
 
-    console.log("Product Found:", rows);
-
     if (rows.length === 0) {
       return res.status(404).json({ error: "Product not found." });
     }
@@ -215,7 +204,7 @@ const updateProductByName = async (req, res) => {
     await pool.execute(insertQuery, [
       name,
       category,
-      product.category_id, // Ensure this is available
+      product.category_id,
       oldStock,
       newStockNumber,
       unit,

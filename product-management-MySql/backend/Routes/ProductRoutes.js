@@ -102,20 +102,19 @@ router.get("/products/:category", async (req, res) => {
     const { category } = req.params;
     console.log(`Fetching products for category: ${category}`);
 
-    // Case-insensitive match on category name
+   
     const [rows] = await db.query(
       "SELECT id, name FROM products WHERE LOWER(category) = LOWER(?)",
       [category]
     );
 
     console.log("Products fetched:", rows);
-    res.json(rows); // e.g., [{ id: 5, name: 'rice' }, ...]
+    res.json(rows); 
   } catch (error) {
     console.error("Error fetching products:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
 
 
 router.get("/keywords/:categoryId", async (req, res) => {
@@ -132,7 +131,7 @@ router.get("/keywords/:categoryId", async (req, res) => {
 
 
 
-router.put("/update/:name/:category/:unit", updateProductByName);
+router.put("/update-product/:name/:category/:unit", updateProductByName);
 
 router.get("/product/:name/:category/:unit", productController.getProductByDetails);
 router.get("/product/:name/:category", productController.getProductByDetails);
