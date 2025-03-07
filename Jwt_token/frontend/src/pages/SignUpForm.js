@@ -16,7 +16,10 @@ const SignUpForm = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
-
+    
+    if (!usernameRegex.test(name)) {
+      setError("invaild username");
+    }
     if (!name || !email || !password) {
       setError('All fields are required');
       return;
@@ -33,7 +36,7 @@ const SignUpForm = () => {
     }
 
     try {
-      const response = await axios.post('/api/auth/signup', { name, email, password });
+      const response = await axios.post('/auth/signup', { name, email, password });
       setSuccess('User registered successfully!');
     } catch (err) {
       setError(err.response ? err.response.data.message : 'Server error');

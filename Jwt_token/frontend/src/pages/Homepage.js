@@ -1,22 +1,28 @@
+// src/pages/HomePage.js
 import React from 'react';
 
-const Homepage = () => {
-    return (
-        <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
-            <header className="bg-blue-600 w-full py-4">
-                <h1 className="text-white text-center text-3xl">Welcome to the Homepage</h1>
-            </header>
-            <main className="flex-grow flex flex-col items-center justify-center">
-                <p className="text-gray-700 text-lg">This is a simple homepage using Tailwind CSS.</p>
-                <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                    Get Started
-                </button>
-            </main>
-            <footer className="bg-gray-800 w-full py-4">
-                <p className="text-white text-center">© 2023 Your Company</p>
-            </footer>
-        </div>
-    );
+const HomePage = () => {
+  return (
+    <div className="min-h-screen bg-gray-100 flex flex-col">
+  
+      <header className="bg-purple-600 text-white p-4">
+        <h1 className="text-4xl font-bold text-center">Welcome to My App</h1>
+      </header>
+
+     
+      <main className="flex-grow p-8 flex flex-col items-center justify-center">
+        <h2 className="text-2xl font-semibold mb-4">Home Page</h2>
+        <p className="text-gray-700 text-center">
+          This is the home page of your application. Here you can include a welcome message, a summary of features, or any other content you want your users to see first.
+        </p>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-gray-800 text-white p-4 text-center">
+        <p>&copy; {new Date().getFullYear()} My App. All rights reserved.</p>
+      </footer>
+    </div>
+  );
 };
 
-export default Homepage;
+export default HomePage;

@@ -18,9 +18,9 @@ const SignInForm = () => {
     }
 
     try {
-      const response = await axios.post('/api/auth/signin', { email, password });
+      const response = await axios.post('/auth/signin', { email, password });
       setSuccess('Sign in successful!');
-      localStorage.setItem('token', response.data.token); // Store the token
+      localStorage.setItem('token', response.data.token); 
     } catch (err) {
       setError(err.response ? err.response.data.message : 'Server error');
     }
