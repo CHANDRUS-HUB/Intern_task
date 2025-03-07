@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Menu, X } from "lucide-react"; // Icons for menu toggle
+import { Menu, X } from "lucide-react"; 
 import icon from "../assets/icon.png"; 
 
 const Navbar = () => {
@@ -10,7 +10,7 @@ const Navbar = () => {
     <nav className="bg-white shadow-md fixed top-0 w-full z-50">
       <div className="container mx-auto px-6 py-4 flex justify-between items-center">
         
-        {/* Logo */}
+      
         <NavLink to="/" className="flex items-center space-x-3">
           <img src={icon} alt="Logo" className="h-12 w-auto" />
           <span className="text-gray-800 text-2xl font-bold tracking-wide hover:text-purple-700 transition-all">

@@ -11,7 +11,7 @@ const Navbar = () => {
         
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 text-white font-bold text-xl">
-              MyApp
+             
             </Link>
             <div className="hidden md:flex ml-10 space-x-4">
               <Link

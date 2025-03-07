@@ -10,7 +10,7 @@ const DailyConsumption = () => {
   const [newStock, setNewStock] = useState("");
   const [consumed, setConsumed] = useState("");
   const [inHandStock, setInHandStock] = useState(0);
-  const [searchTerm, setSearchTerm] = useState(""); 
+  const [searchTerm, ] = useState(""); 
 
   
   useEffect(() => {
@@ -24,7 +24,7 @@ const DailyConsumption = () => {
         }
       } catch (error) {
         console.error("Error fetching product list:", error);
-        toast.error("❌ Error fetching product list.");
+        toast.error(" Error fetching product list.");
       }
     };
     loadProducts();
