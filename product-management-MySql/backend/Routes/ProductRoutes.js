@@ -57,7 +57,7 @@ router.get("/unit-products/:unit", async (req, res) => {
   try {
       console.log(`Fetching products with unit: ${unit}`);
 
-      const [rows] = await db.query( // Changed from execute() to query() (both work)
+      const [rows] = await db.query( 
           "SELECT * FROM products WHERE unit = ?", 
           [unit]
       );
