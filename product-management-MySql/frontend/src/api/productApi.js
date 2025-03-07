@@ -51,4 +51,3 @@ export const getProductByName = async (name) => {
     return null; 
   }
 };
-
