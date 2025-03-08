@@ -17,7 +17,7 @@ const ViewDetails = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [uniqueProductNames, setUniqueProductNames] = useState([]);
+  const [, setUniqueProductNames] = useState([]);
   const navigate = useNavigate();
 
   const itemsPerPage = 5;
@@ -80,10 +80,11 @@ const ViewDetails = () => {
     toPng(contentRef.current)
       .then((dataUrl) => {
         const pdf = new jsPDF();
+        pdf.text('Product Management Report', 10, 10);
         const imgProps = pdf.getImageProperties(dataUrl);
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.addImage(dataUrl, 'PDF', 0, 0, pdfWidth, pdfHeight);
         pdf.save('Product_Details.pdf');
       })
       .catch((err) => console.error("Error exporting PDF:", err));
@@ -185,10 +186,10 @@ const ViewDetails = () => {
 
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50"
+           
             disabled={currentPage === 1}
           >
-            ◀ Prev
+         
           </button>
 
 
@@ -196,7 +197,7 @@ const ViewDetails = () => {
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
-              className={`px-4 py-2 rounded-lg transition ${currentPage === page ? "bg-blue-600 text-white" : "bg-gray-200 hover:bg-gray-300"
+              className={`px-4 py-2 rounded-lg transition ${currentPage === page ? "bg-blue-600 text-white" : "bg-gray-200"
                 }`}
             >
               {page}
@@ -206,10 +207,10 @@ const ViewDetails = () => {
 
           <button
             onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50"
+           
             disabled={currentPage === totalPages}
           >
-            Next ▶
+          
           </button>
         </div>
       )}
