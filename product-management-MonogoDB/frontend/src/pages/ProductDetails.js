@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { fetchProducts } from "../api/productApi";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { baseurl } from "../URL/url";
 import { FaFilePdf } from 'react-icons/fa'; // For PDF icon
 import { useRef } from 'react'; // For PDF export
-import { toPng } from 'html-to-image'; // Alternative for PDF export
-import jsPDF from 'jspdf'; // For PDF generation
-
+// import { toPng } from 'html-to-image'; // Alternative for PDF export
+// import jsPDF from 'jspdf'; // For PDF generation
+import axios from 'axios'; 
 
 
 
@@ -76,19 +77,36 @@ const ViewDetails = () => {
   );
   const contentRef = useRef();
 
-  const exportToPDF = () => {
-    toPng(contentRef.current)
-      .then((dataUrl) => {
-        const pdf = new jsPDF();
-        pdf.text('Product Management Report', 10, 10);
-        const imgProps = pdf.getImageProperties(dataUrl);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        pdf.addImage(dataUrl, 'PDF', 0, 0, pdfWidth, pdfHeight);
-        pdf.save('Product_Details.pdf');
-      })
-      .catch((err) => console.error("Error exporting PDF:", err));
-  };
+  // const exportToPDF = () => {
+  //   toPng(contentRef.current)
+  //     .then((dataUrl) => {
+  //       const pdf = new jsPDF();
+  //       pdf.text('Product Management Report', 10, 10);
+  //       const imgProps = pdf.getImageProperties(dataUrl);
+  //       const pdfWidth = pdf.internal.pageSize.getWidth();
+  //       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+  //       pdf.addImage(dataUrl, 'PDF', 0, 0, pdfWidth, pdfHeight);
+  //       pdf.save('Product_Details.pdf');
+  //     })
+  //     .catch((err) => console.error("Error exporting PDF:", err));
+  // };
+
+  const handleDownloadPDF = async () => {
+    try {
+        const response = await axios.get(`${baseurl}/export-pdf`, {
+            responseType: 'blob', // Important for file download
+        });
+
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'Product_Report.pdf');
+        document.body.appendChild(link);
+        link.click();
+    } catch (error) {
+        console.error("Error downloading PDF:", error);
+    }
+};
 
 
   return (
@@ -115,7 +133,7 @@ const ViewDetails = () => {
           className="w-64 p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
         />
         <button
-          onClick={exportToPDF}
+          onClick={handleDownloadPDF}
           className="bg-red-600 text-white p-2 rounded-full shadow hover:bg-red-700 transition"
           title="Export to PDF"
         >

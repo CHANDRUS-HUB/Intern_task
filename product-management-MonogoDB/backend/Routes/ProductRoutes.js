@@ -5,6 +5,7 @@ const {
   updateProductByName,
   getProductByName,
 } = require("../Controllers/ProductController");
+const { generatePDF } = require('../Controllers/PdfControlers');
 
 const router = express.Router();
 
@@ -17,6 +18,7 @@ router.post("/add-product", addProduct);
 
 router.put("/products/update/:name", updateProductByName);
 
+router.get("/export-pdf",generatePDF);
 
 router.get("/product/:name", getProductByName);
 

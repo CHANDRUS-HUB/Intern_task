@@ -22,7 +22,7 @@ const unitTypes = ["kg", "g", "liter", "ml", "package", "piece", "box", "dozen",
 
 const addProduct = async (req, res) => {
   try {
-    console.log(" Incoming Product Data:", req.body); 
+    // console.log(" Incoming Product Data:", req.body); 
 
     let { name, new_stock, unit, consumed } = req.body;
 
