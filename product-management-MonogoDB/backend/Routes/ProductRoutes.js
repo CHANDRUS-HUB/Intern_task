@@ -3,7 +3,7 @@ const {
   getProducts,
   addProduct,
   updateProductByName,
-  getProductByName,
+  getProductByName,getDashboardData 
 } = require("../Controllers/ProductController");
 const { generatePDF } = require('../Controllers/PdfControlers');
 
@@ -12,6 +12,7 @@ const router = express.Router();
 
 router.get("/products", getProducts);
 
+router.get("/dashboard-data", getDashboardData);
 
 router.post("/add-product", addProduct);
 

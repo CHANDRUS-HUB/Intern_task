@@ -174,5 +174,28 @@ const getProductByName = async (req, res) => {
     res.status(500).json({ error: " Error fetching product details." });
   }
 };
+const getDashboardData = async (req, res) => {
+  try {
+      // Aggregate data for categories
+      const categoryData = await Product.aggregate([
+          {
+              $group: {
+                  _id: "$category",
+                  stock: { $sum: "$in_hand_stock" },
+                  consumption: { $sum: "$consumption" }
+              }
+          }
+      ]);
 
-module.exports = { getProducts, addProduct, updateProductByName, getProductByName };
+      // Fetch all product details
+      const productData = await Product.find({}, 'name category in_hand_stock consumption');
+
+      res.status(200).json({ categoryData, productData });
+  } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      res.status(500).json({ error: "Failed to fetch dashboard data." });
+  }
+};
+
+
+module.exports = { getProducts, addProduct, updateProductByName, getProductByName ,getDashboardData};

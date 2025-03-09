@@ -1,35 +1,54 @@
-import React from "react";
-import logo from "../assets/logo.png";
+import React from 'react';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Card, CardContent } from "../ui/card";
+
+const data = [
+    { name: 'Canteen', stock: 400, consumption: 240 },
+    { name: 'Stationary', stock: 300, consumption: 139 },
+    { name: 'Washroom', stock: 200, consumption: 980 },
+    { name: 'Cleaning', stock: 278, consumption: 390 },
+];
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const Dashboard = () => {
-  return (
-    <div className="flex flex-col md:flex-row items-center justify-between min-h-screen bg-gradient-to-r from-purple-700 to-indigo-800 p-8 md:p-12 lg:p-16">
-      {/* Text Section */}
-      <div className="text-white max-w-xl text-center md:text-left space-y-6">
-        <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-          Welcome to <span className="text-yellow-300">Product Management</span>
-        </h1>
-        <p className="text-lg md:text-xl opacity-90">
-          Streamline product tracking, manage stock efficiently, and analyze daily consumption—all in one place.
-        </p>
-        <a
-          href="/product-details"
-          className="inline-block bg-yellow-400 text-purple-900 font-semibold text-lg md:text-xl px-6 py-3 rounded-lg shadow-md hover:bg-yellow-300 transition-all duration-300 ease-in-out transform hover:scale-105"
-        >
-          View Products
-        </a>
-      </div>
+    return (
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Bar Chart */}
+            <Card>
+                <CardContent className="p-4">
+                    <h2 className="text-xl font-bold mb-4">Stock vs Consumption</h2>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={data}>
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Bar dataKey="stock" fill="#4F46E5" name="Total Stock" />
+                            <Bar dataKey="consumption" fill="#EC4899" name="Total Consumption" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
 
-    
-      <div className="mt-10 md:mt-0 flex justify-center md:justify-end">
-        <img
-          src={logo}
-          alt="Product Management System Logo"
-          className="drop-shadow-lg max-w-[250px] md:max-w-[300px] lg:max-w-[350px] object-contain"
-        />
-      </div>
-    </div>
-  );
+            {/* Pie Chart */}
+            <Card>
+                <CardContent className="p-4">
+                    <h2 className="text-xl font-bold mb-4">Stock Distribution</h2>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                            <Pie data={data} dataKey="stock" nameKey="name" outerRadius={100} label>
+                                {data.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                            </Pie>
+                            <Tooltip />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
+        </div>
+    );
 };
 
 export default Dashboard;
