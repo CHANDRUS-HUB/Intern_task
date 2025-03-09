@@ -104,7 +104,7 @@ const ViewDetails = () => {
           Update Stock
         </button>
       </div>
-
+ 
 
       <div className="mb-4 flex items-center gap-4">
         <input
