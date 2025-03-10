@@ -1,6 +1,6 @@
 import axios from "axios";
 import { baseurl } from "../URL/url";
-
+import { toast } from "react-toastify";
 
 export const fetchProducts = async () => {
   try {
@@ -92,3 +92,38 @@ export const updateProduct = async (name, { newStock, unit, consumed }) => {
     throw error;
   }
 };
+
+
+
+
+
+
+
+export const downloadPDF = async () => {
+    try {
+        const response = await axios.get(`${baseurl}/export-pdf`, {
+            responseType: 'blob' // Important for handling PDF files
+        });
+
+        // Create a Blob URL for the PDF file
+        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+
+        // Create a download link
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'Product_List.pdf';
+        document.body.appendChild(link);
+
+        // Trigger download and cleanup
+        link.click();
+        link.remove();
+
+        // Free up memory
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Error downloading PDF:', error);
+        toast.error('Failed to download PDF. Please try again.');
+    }
+};
+

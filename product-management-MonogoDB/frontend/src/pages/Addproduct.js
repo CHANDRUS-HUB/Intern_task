@@ -30,28 +30,29 @@ const categoryUnits = {
 };
 
 const categoryKeywords = {
-  dairy: ['milk', 'cheese', 'yogurt', 'butter', 'cream', 'lactose', 'ghee', 'paneer', 'cottage cheese', 'whey', 'buttermilk', 'curd'],
-  fruit: ['apple', 'banana', 'orange', 'grape', 'mango', 'peach', 'watermelon', 'kiwi', 'pineapple', 'pear', 'pomegranate', 'strawberry', 'blueberry', 'lemon'],
-  vegetable: ['carrot', 'spinach', 'broccoli', 'tomato', 'potato', 'onion', 'cucumber', 'lettuce', 'cabbage', 'peas', 'capsicum', 'mushroom', 'ginger', 'garlic', 'beetroot'],
-  grains: ['rice', 'wheat', 'oats', 'barley', 'quinoa', 'millet', 'corn', 'buckwheat', 'flour', 'pasta', 'noodles', 'semolina', 'vermicelli'],
-  meat: ['chicken', 'beef', 'pork', 'lamb', 'fish', 'turkey', 'duck', 'bacon', 'sausages', 'hamburger', 'mutton', 'crab', 'prawns'],
-  snacks: ['chips', 'crisps', 'popcorn', 'biscuits', 'cookies', 'chocolate', 'candy', 'snack bars', 'granola bars', 'namkeen', 'khakhra', 'murukku', 'chakli'],
-  beverages: ['coffee', 'tea', 'juice', 'soda', 'water', 'milkshake', 'energy drink', 'beer', 'wine', 'cocktail', 'coconut water', 'lassi', 'green tea'],
-  spices: ['salt', 'pepper', 'cumin', 'turmeric', 'coriander', 'chili', 'ginger', 'garlic', 'cinnamon', 'cardamom', 'bay leaf', 'cloves', 'nutmeg', 'star anise'],
-  bakery: ['bread', 'baguette', 'croissant', 'muffins', 'cookies', 'cake', 'pastries', 'pie', 'donuts', 'rusk', 'breadsticks'],
-  frozen: ['frozen vegetables', 'frozen fruit', 'ice cream', 'frozen pizza', 'frozen chicken', 'frozen fish', 'frozen paratha', 'frozen chapati'],
-  condiments: ['ketchup', 'mustard', 'mayonnaise', 'barbecue sauce', 'soy sauce', 'hot sauce', 'vinaigrette', 'chili sauce', 'honey', 'vinegar'],
-  nuts_and_seeds: ['almonds', 'cashews', 'peanuts', 'walnuts', 'sunflower seeds', 'flax seeds', 'pumpkin seeds', 'chia seeds', 'sesame seeds', 'pistachios'],
-  dairy_alternatives: ['soy milk', 'almond milk', 'coconut milk', 'oat milk', 'tofu', 'tempeh', 'vegan cheese', 'cashew milk'],
-  canned_goods: ['canned beans', 'canned tomatoes', 'canned tuna', 'canned corn', 'canned soup', 'canned fruit', 'canned peas', 'canned mushrooms'],
-  cleaning_supplies: ['detergent', 'dish soap', 'toilet cleaner', 'glass cleaner', 'floor cleaner', 'laundry powder', 'bleach', 'phenyl', 'scrubber', 'garbage bags'],
-  personal_care: ['shampoo', 'conditioner', 'soap', 'toothpaste', 'toothbrush', 'lotion', 'deodorant', 'razor', 'hand wash', 'sanitizer', 'talcum powder'],
-  baby_products: ['diapers', 'baby wipes', 'baby food', 'formula', 'baby lotion', 'pacifier', 'baby shampoo', 'baby oil', 'baby powder'],
-  pet_supplies: ['dog food', 'cat food', 'pet shampoo', 'pet toys', 'litter', 'dog treats', 'pet collar', 'fish food', 'bird seeds'],
-  health_supplements: ['vitamins', 'protein powder', 'omega-3', 'multivitamins', 'fish oil', 'probiotics', 'creatine', 'calcium tablets', 'herbal supplements'],
-  household_essentials: ['tissues', 'napkins', 'toilet paper', 'aluminum foil', 'cling wrap', 'mosquito repellent', 'matchbox', 'batteries'],
-  cooking_essentials: ['cooking oil', 'ghee', 'butter', 'sugar', 'jaggery', 'salt', 'rice flour', 'corn flour', 'baking powder', 'yeast'],
+  Dairy: ['Milk', 'Cheese', 'Yogurt', 'Butter', 'Cream', 'Lactose', 'Ghee', 'Paneer', 'Cottage Cheese', 'Whey', 'Buttermilk', 'Curd'],
+  Fruit: ['Apple', 'Banana', 'Orange', 'Grape', 'Mango', 'Peach', 'Watermelon', 'Kiwi', 'Pineapple', 'Pear', 'Pomegranate', 'Strawberry', 'Blueberry', 'Lemon'],
+  Vegetable: ['Carrot', 'Spinach', 'Broccoli', 'Tomato', 'Potato', 'Onion', 'Cucumber', 'Lettuce', 'Cabbage', 'Peas', 'Capsicum', 'Mushroom', 'Ginger', 'Garlic', 'Beetroot'],
+  Grains: ['Rice', 'Wheat', 'Oats', 'Barley', 'Quinoa', 'Millet', 'Corn', 'Buckwheat', 'Flour', 'Pasta', 'Noodles', 'Semolina', 'Vermicelli'],
+  Meat: ['Chicken', 'Beef', 'Pork', 'Lamb', 'Fish', 'Turkey', 'Duck', 'Bacon', 'Sausages', 'Hamburger', 'Mutton', 'Crab', 'Prawns'],
+  Snacks: ['Chips', 'Crisps', 'Popcorn', 'Biscuits', 'Cookies', 'Chocolate', 'Candy', 'Snack Bars', 'Granola Bars', 'Namkeen', 'Khakhra', 'Murukku', 'Chakli'],
+  Beverages: ['Coffee', 'Tea', 'Juice', 'Soda', 'Water', 'Milkshake', 'Energy Drink', 'Beer', 'Wine', 'Cocktail', 'Coconut Water', 'Lassi', 'Green Tea'],
+  Spices: ['Salt', 'Pepper', 'Cumin', 'Turmeric', 'Coriander', 'Chili', 'Ginger', 'Garlic', 'Cinnamon', 'Cardamom', 'Bay Leaf', 'Cloves', 'Nutmeg', 'Star Anise'],
+  Bakery: ['Bread', 'Baguette', 'Croissant', 'Muffins', 'Cookies', 'Cake', 'Pastries', 'Pie', 'Donuts', 'Rusk', 'Breadsticks'],
+  Frozen: ['Frozen Vegetables', 'Frozen Fruit', 'Ice Cream', 'Frozen Pizza', 'Frozen Chicken', 'Frozen Fish', 'Frozen Paratha', 'Frozen Chapati'],
+  Condiments: ['Ketchup', 'Mustard', 'Mayonnaise', 'Barbecue Sauce', 'Soy Sauce', 'Hot Sauce', 'Vinaigrette', 'Chili Sauce', 'Honey', 'Vinegar'],
+  Nuts_and_Seeds: ['Almonds', 'Cashews', 'Peanuts', 'Walnuts', 'Sunflower Seeds', 'Flax Seeds', 'Pumpkin Seeds', 'Chia Seeds', 'Sesame Seeds', 'Pistachios'],
+  Dairy_Alternatives: ['Soy Milk', 'Almond Milk', 'Coconut Milk', 'Oat Milk', 'Tofu', 'Tempeh', 'Vegan Cheese', 'Cashew Milk'],
+  Canned_Goods: ['Canned Beans', 'Canned Tomatoes', 'Canned Tuna', 'Canned Corn', 'Canned Soup', 'Canned Fruit', 'Canned Peas', 'Canned Mushrooms'],
+  Cleaning_Supplies: ['Detergent', 'Dish Soap', 'Toilet Cleaner', 'Glass Cleaner', 'Floor Cleaner', 'Laundry Powder', 'Bleach', 'Phenyl', 'Scrubber', 'Garbage Bags'],
+  Personal_Care: ['Shampoo', 'Conditioner', 'Soap', 'Toothpaste', 'Toothbrush', 'Lotion', 'Deodorant', 'Razor', 'Hand Wash', 'Sanitizer', 'Talcum Powder'],
+  Baby_Products: ['Diapers', 'Baby Wipes', 'Baby Food', 'Formula', 'Baby Lotion', 'Pacifier', 'Baby Shampoo', 'Baby Oil', 'Baby Powder'],
+  Pet_Supplies: ['Dog Food', 'Cat Food', 'Pet Shampoo', 'Pet Toys', 'Litter', 'Dog Treats', 'Pet Collar', 'Fish Food', 'Bird Seeds'],
+  Health_Supplements: ['Vitamins', 'Protein Powder', 'Omega-3', 'Multivitamins', 'Fish Oil', 'Probiotics', 'Creatine', 'Calcium Tablets', 'Herbal Supplements'],
+  Household_Essentials: ['Tissues', 'Napkins', 'Toilet Paper', 'Aluminum Foil', 'Cling Wrap', 'Mosquito Repellent', 'Matchbox', 'Batteries'],
+  Cooking_Essentials: ['Cooking Oil', 'Ghee', 'Butter', 'Sugar', 'Jaggery', 'Salt', 'Rice Flour', 'Corn Flour', 'Baking Powder', 'Yeast']
 };
+
 
 
 const AddProduct = () => {

@@ -39,14 +39,15 @@ const addProduct = async (req, res) => {
     if (!name || !nameRegex.test(name)) {
       return res.status(400).json({ error: " Invalid product name. Only letters and single spaces allowed." });
     }
+
     if (!unit || !unitTypes.includes(unit)) {
       return res.status(400).json({ error: " Invalid unit type. Choose from: " + unitTypes.join(", ") });
     }
+
     if (isNaN(new_stock) || isNaN(consumed) || new_stock < 0 || consumed < 0) {
       return res.status(400).json({ error: " Invalid stock values. Must be numbers >= 0." });
     }
 
-    
     let product = await Product.findOne({
       name: { $regex: new RegExp(`^${name}$`, "i") }
     });
@@ -55,7 +56,6 @@ const addProduct = async (req, res) => {
       return res.status(400).json({ error: " Product already exists. Use update instead." });
     }
 
-    
     product = new Product({
       name,
       old_stock: 0,
@@ -74,9 +74,6 @@ const addProduct = async (req, res) => {
     res.status(500).json({ error: " Database error occurred." });
   }
 };
-
-
-
 
 const updateProductByName = async (req, res) => {
   try {

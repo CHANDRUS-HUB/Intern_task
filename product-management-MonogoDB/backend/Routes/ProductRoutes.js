@@ -5,7 +5,7 @@ const {
   updateProductByName,
   getProductByName,getDashboardData 
 } = require("../Controllers/ProductController");
-const { generatePDF } = require('../Controllers/PdfControlers');
+const { exportPDF} = require('../Controllers/PdfControlers');
 
 const router = express.Router();
 
@@ -14,12 +14,14 @@ router.get("/products", getProducts);
 
 router.get("/dashboard-data", getDashboardData);
 
+
+router.get("/export-pdf",exportPDF);
 router.post("/add-product", addProduct);
 
 
 router.put("/products/update/:name", updateProductByName);
 
-router.get("/export-pdf",generatePDF);
+// router.get("/export-pdf",generatePDF);
 
 router.get("/product/:name", getProductByName);
 

@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import { fetchProducts } from "../api/productApi";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { baseurl } from "../URL/url";
-import { FaFilePdf } from 'react-icons/fa'; // For PDF icon
+// import { baseurl } from "../URL/url";
+// import { FaFilePdf } from 'react-icons/fa'; // For PDF icon
 import { useRef } from 'react'; // For PDF export
 // import { toPng } from 'html-to-image'; // Alternative for PDF export
 // import jsPDF from 'jspdf'; // For PDF generation
-import axios from 'axios'; 
-
-
+// import axios from 'axios'; 
+import PDFExportButton from '../components/Pdfexport'
+// import html2canvas from 'html2canvas';
 
 const ViewDetails = () => {
   const [products, setProducts] = useState([]);
@@ -21,7 +21,7 @@ const ViewDetails = () => {
   const [, setUniqueProductNames] = useState([]);
   const navigate = useNavigate();
 
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -77,36 +77,92 @@ const ViewDetails = () => {
   );
   const contentRef = useRef();
 
-  // const exportToPDF = () => {
-  //   toPng(contentRef.current)
-  //     .then((dataUrl) => {
-  //       const pdf = new jsPDF();
-  //       pdf.text('Product Management Report', 10, 10);
-  //       const imgProps = pdf.getImageProperties(dataUrl);
-  //       const pdfWidth = pdf.internal.pageSize.getWidth();
-  //       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-  //       pdf.addImage(dataUrl, 'PDF', 0, 0, pdfWidth, pdfHeight);
-  //       pdf.save('Product_Details.pdf');
-  //     })
-  //     .catch((err) => console.error("Error exporting PDF:", err));
-  // };
+//   const exportToPDF = () => {
+//     const hiddenContent = document.createElement('div');
+//     hiddenContent.innerHTML = `
+//         <div id="hidden-content">
+//             <h2 style="text-align: center;padding-buttom:">Product Management Report</h2>
+//             <table style="width: 100%; border-collapse: collapse;">
+//                 <thead>
+//                     <tr style="background-color: #6b46c1; color: #fff;">
+//                         <th style="padding: 8px; border: 1px solid #ddd;">Product Name</th>
+//                         <th style="padding: 8px; border: 1px solid #ddd;">Category</th>
+//                         <th style="padding: 8px; border: 1px solid #ddd;">Old Stock</th>
+//                         <th style="padding: 8px; border: 1px solid #ddd;">New Stock</th>
+//                         <th style="padding: 8px; border: 1px solid #ddd;">Unit</th>
+//                         <th style="padding: 8px; border: 1px solid #ddd;">Consumed</th>
+//                         <th style="padding: 8px; border: 1px solid #ddd;">In-Hand Stock</th>
+//                         <th style="padding: 8px; border: 1px solid #ddd;">Date</th>
+//                     </tr>
+//                 </thead>
+//                 <tbody>
+//                     ${products.map(product => `
+//                         <tr>
+//                             <td style="padding: 8px; border: 1px solid #ddd;">${product.name}</td>
+//                             <td style="padding: 8px; border: 1px solid #ddd;">${product.category || "N/A"}</td>
+//                             <td style="padding: 8px; border: 1px solid #ddd;">${product.old_stock ?? 0}</td>
+//                             <td style="padding: 8px; border: 1px solid #ddd;">${product.new_stock ?? 0}</td>
+//                             <td style="padding: 8px; border: 1px solid #ddd;">${product.unit || "N/A"}</td>
+//                             <td style="padding: 8px; border: 1px solid #ddd;">${product.consumed ?? 0}</td>
+//                             <td style="padding: 8px; border: 1px solid #ddd;">${product.in_hand_stock ?? 0}</td>
+//                             <td style="padding: 8px; border: 1px solid #ddd;">
+//                                 ${product.createdAt ? new Date(product.createdAt).toLocaleDateString() : "-"}
+//                             </td>
+//                         </tr>
+//                     `).join('')}
+//                 </tbody>
+//             </table>
+//         </div>
+//     `;
 
-  const handleDownloadPDF = async () => {
-    try {
-        const response = await axios.get(`${baseurl}/export-pdf`, {
-            responseType: 'blob', // Important for file download
-        });
+//     document.body.appendChild(hiddenContent);
 
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', 'Product_Report.pdf');
-        document.body.appendChild(link);
-        link.click();
-    } catch (error) {
-        console.error("Error downloading PDF:", error);
-    }
-};
+//     html2canvas(hiddenContent).then((canvas) => {
+//         const pdf = new jsPDF('p', 'mm', 'a4');
+//         const imgData = canvas.toDataURL('image/png');
+
+//         const imgWidth = 210;
+//         const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+//         let heightLeft = imgHeight;
+//         let position = 0;
+
+//         pdf.text('Product Management Report', 20, 20);
+
+//         while (heightLeft > 0) {
+//             pdf.addImage(imgData, 'PNG', 0, position + 30, imgWidth, imgHeight);
+
+//             heightLeft -= 297;
+//             position -= 297;
+
+//             if (heightLeft > 0) {
+//                 pdf.addPage();
+//             }
+//         }
+
+//         pdf.save('Product_Details.pdf');
+//         document.body.removeChild(hiddenContent); 
+//     }).catch((err) => console.error("Error exporting PDF:", err));
+// };
+
+
+//   const handleDownloadPDF = async () => {
+//     try {
+//         const response = await axios.get(`${baseurl}/export-pdf`, {
+//             responseType: 'blob', // Important for file download
+//         });
+
+//         const url = window.URL.createObjectURL(new Blob([response.data]));
+//         const link = document.createElement('a');
+//         link.href = url;
+//         link.setAttribute('download', 'Product_Report.pdf');
+//         document.body.appendChild(link);
+//         link.click();
+//     } catch (error) {
+//         console.error("Error downloading PDF:", error);
+//     }
+// };
+
 
 
   return (
@@ -132,14 +188,14 @@ const ViewDetails = () => {
           onChange={handleSearch}
           className="w-64 p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
         />
-        <button
-          onClick={handleDownloadPDF}
+        {/* <button
+          onClick={exportToPDF}
           className="bg-red-600 text-white p-2 rounded-full shadow hover:bg-red-700 transition"
           title="Export to PDF"
         >
           <FaFilePdf size={20} />
-        </button>
-
+        </button> */}
+           <PDFExportButton />
         {/* <select
           className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
           onChange={(e) => setSearchTerm(e.target.value)}

@@ -1,54 +1,81 @@
-import React from 'react';
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent } from "../ui/card";
-
-const data = [
-    { name: 'Canteen', stock: 400, consumption: 240 },
-    { name: 'Stationary', stock: 300, consumption: 139 },
-    { name: 'Washroom', stock: 200, consumption: 980 },
-    { name: 'Cleaning', stock: 278, consumption: 390 },
-];
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+import { toast } from "react-toastify";
+import { baseurl } from '../URL/url';
+import Homepage from '../components/Homepage';
+import DonutChart from '../components/DonutChart';
+// const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const Dashboard = () => {
+    const [chartData, setChartData] = useState([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await axios.get(`${baseurl}/products`);
+                
+                // Transform data for chart display
+                const transformedData = response.data.reduce((acc, product) => {
+                    const existingCategory = acc.find(item => item.name === product.category);
+
+                    if (existingCategory) {
+                        existingCategory.totalStock += product.old_stock + product.new_stock;
+                        existingCategory.totalConsumption += product.consumed;
+                        existingCategory.inHandStock += product.in_hand_stock;
+                    } else {
+                        acc.push({
+                            name: product.category,
+                            totalStock: product.old_stock + product.new_stock,
+                            totalConsumption: product.consumed,
+                            inHandStock: product.in_hand_stock
+                        });
+                    }
+
+                    return acc;
+                }, []);
+
+                setChartData(transformedData);
+            } catch (error) {
+                console.error("Error fetching dashboard data:", error);
+                toast.error("Failed to load dashboard data.");
+            }
+        };
+
+        fetchData();
+    }, []);
+
     return (
+
+        <>
+        <Homepage/>
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Bar Chart */}
             <Card>
                 <CardContent className="p-4">
-                    <h2 className="text-xl font-bold mb-4">Stock vs Consumption</h2>
+                    <h2 className="text-xl font-bold mb-4">Stock Overview</h2>
                     <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={data}>
+                        <BarChart data={chartData}>
                             <XAxis dataKey="name" />
                             <YAxis />
                             <Tooltip />
                             <Legend />
-                            <Bar dataKey="stock" fill="#4F46E5" name="Total Stock" />
-                            <Bar dataKey="consumption" fill="#EC4899" name="Total Consumption" />
+                            <Bar dataKey="totalStock" fill="#4F46E5" name="Total Stock " />
+                            <Bar dataKey="totalConsumption" fill="#EC4899" name="Total Consumption" />
+                            <Bar dataKey="inHandStock" fill="#10B981" name="In-Hand Stock" />
                         </BarChart>
                     </ResponsiveContainer>
                 </CardContent>
             </Card>
 
             {/* Pie Chart */}
-            <Card>
-                <CardContent className="p-4">
-                    <h2 className="text-xl font-bold mb-4">Stock Distribution</h2>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                            <Pie data={data} dataKey="stock" nameKey="name" outerRadius={100} label>
-                                {data.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Pie>
-                            <Tooltip />
-                        </PieChart>
-                    </ResponsiveContainer>
-                </CardContent>
-            </Card>
+         <DonutChart/>
         </div>
+        </>
     );
+    
 };
+
 
 export default Dashboard;
