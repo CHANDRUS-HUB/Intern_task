@@ -296,7 +296,7 @@ const ViewDetails = () => {
                   </td>
                   <button
                     onClick={() => handleOpenEditModal(product)}
-                    className="bg-yellow-500 ml-2 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-600 transition"
+                    className="bg-yellow-500 ml-2 text-white px-4 py-2 mt-1 rounded-lg shadow hover:bg-yellow-600 transition"
                   >
                     Edit
                   </button>

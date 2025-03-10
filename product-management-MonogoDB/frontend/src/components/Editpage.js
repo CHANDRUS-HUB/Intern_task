@@ -4,12 +4,15 @@ const EditModal = ({ product, onConfirm, onCancel }) => {
   const [newStock, setNewStock] = useState(product.newStock || 0);
   const [consumed, setConsumed] = useState(product.consumed || 0);
 
-  // Auto-calculate In-Hand Stock
-  const inHandStock = Number(product.oldStock) + Number(newStock) - Number(consumed);
+  const oldStock = Number(product.oldStock) || 0;
+
+  // Calculate In-Hand Stock with a minimum value of 0
+  const availableStock = oldStock + Number(newStock);
+  const inHandStock = Math.max(availableStock - Number(consumed), 0);
 
   // Validation
   const handleConfirm = () => {
-    if (consumed > product.oldStock + newStock) {
+    if (consumed > availableStock) {
       alert("Consumption cannot exceed available stock.");
       return;
     }
@@ -20,17 +23,11 @@ const EditModal = ({ product, onConfirm, onCancel }) => {
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm">
       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-lg font-semibold mb-4">Edit Product Details</h2>
-        
+
         <div className="text-left space-y-3">
-          <p>
-            <strong>Product Name:</strong> {product.name}
-          </p>
-          <p>
-            <strong>Category:</strong> {product.category}
-          </p>
-          <p>
-            <strong>Old Stock:</strong> {product.oldStock}
-          </p>
+          <p><strong>Product Name:</strong> {product.name}</p>
+          <p><strong>Category:</strong> {product.category}</p>
+          <p><strong>Old Stock:</strong> {oldStock}</p>
 
           {/* New Stock Input */}
           <div>
@@ -63,7 +60,8 @@ const EditModal = ({ product, onConfirm, onCancel }) => {
         <div className="mt-4 flex justify-center gap-4">
           <button
             onClick={handleConfirm}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            className={`px-4 py-2 rounded-lg text-white ${consumed > availableStock ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+            disabled={consumed > availableStock}
           >
             Confirm
           </button>
