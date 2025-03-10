@@ -69,8 +69,8 @@ const DonutChart = () => {
     }, [chartData]);
 
     return (
-        <Card>
-            <CardContent className="p-7">  {/* Increased padding */}
+        <Card className=''>
+            <CardContent className="p-7 ">  {/* Increased padding */}
                 <h2 className="text-2xl font-bold justify-center mb-6"> Stock Distribution</h2>
                 <div className="flex justify-center items-center">
                     <Chart

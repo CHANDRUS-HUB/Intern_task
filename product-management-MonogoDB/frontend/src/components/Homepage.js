@@ -13,10 +13,10 @@ const Homepage= () => {
           Streamline product tracking, manage stock efficiently, and analyze daily consumption—all in one place.
         </p>
         <a
-          href="/product-details"
+          href="/add-product"
           className="inline-block bg-yellow-400 text-purple-900 font-semibold text-lg md:text-xl px-6 py-3 rounded-lg shadow-md hover:bg-yellow-300 transition-all duration-300 ease-in-out transform hover:scale-105"
         >
-          View Products
+          Get Start
         </a>
       </div>
  

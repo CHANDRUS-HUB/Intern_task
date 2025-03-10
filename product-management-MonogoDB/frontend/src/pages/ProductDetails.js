@@ -9,7 +9,14 @@ import { useRef } from 'react'; // For PDF export
 // import jsPDF from 'jspdf'; // For PDF generation
 // import axios from 'axios'; 
 import PDFExportButton from '../components/Pdfexport'
-// import html2canvas from 'html2canvas';
+import { baseurl } from "../URL/url"
+
+import axios from "axios";
+
+import DeleteConfirmationModal from "../components/DeleteConfirm";
+import EditModal from "../components/Editpage";
+
+
 
 const ViewDetails = () => {
   const [products, setProducts] = useState([]);
@@ -20,8 +27,11 @@ const ViewDetails = () => {
   const [error, setError] = useState(null);
   const [, setUniqueProductNames] = useState([]);
   const navigate = useNavigate();
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState(null);
   const itemsPerPage = 10;
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Add this
+  const [selectedProduct, setSelectedProduct] = useState(null);   // Add this
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -77,94 +87,131 @@ const ViewDetails = () => {
   );
   const contentRef = useRef();
 
-//   const exportToPDF = () => {
-//     const hiddenContent = document.createElement('div');
-//     hiddenContent.innerHTML = `
-//         <div id="hidden-content">
-//             <h2 style="text-align: center;padding-buttom:">Product Management Report</h2>
-//             <table style="width: 100%; border-collapse: collapse;">
-//                 <thead>
-//                     <tr style="background-color: #6b46c1; color: #fff;">
-//                         <th style="padding: 8px; border: 1px solid #ddd;">Product Name</th>
-//                         <th style="padding: 8px; border: 1px solid #ddd;">Category</th>
-//                         <th style="padding: 8px; border: 1px solid #ddd;">Old Stock</th>
-//                         <th style="padding: 8px; border: 1px solid #ddd;">New Stock</th>
-//                         <th style="padding: 8px; border: 1px solid #ddd;">Unit</th>
-//                         <th style="padding: 8px; border: 1px solid #ddd;">Consumed</th>
-//                         <th style="padding: 8px; border: 1px solid #ddd;">In-Hand Stock</th>
-//                         <th style="padding: 8px; border: 1px solid #ddd;">Date</th>
-//                     </tr>
-//                 </thead>
-//                 <tbody>
-//                     ${products.map(product => `
-//                         <tr>
-//                             <td style="padding: 8px; border: 1px solid #ddd;">${product.name}</td>
-//                             <td style="padding: 8px; border: 1px solid #ddd;">${product.category || "N/A"}</td>
-//                             <td style="padding: 8px; border: 1px solid #ddd;">${product.old_stock ?? 0}</td>
-//                             <td style="padding: 8px; border: 1px solid #ddd;">${product.new_stock ?? 0}</td>
-//                             <td style="padding: 8px; border: 1px solid #ddd;">${product.unit || "N/A"}</td>
-//                             <td style="padding: 8px; border: 1px solid #ddd;">${product.consumed ?? 0}</td>
-//                             <td style="padding: 8px; border: 1px solid #ddd;">${product.in_hand_stock ?? 0}</td>
-//                             <td style="padding: 8px; border: 1px solid #ddd;">
-//                                 ${product.createdAt ? new Date(product.createdAt).toLocaleDateString() : "-"}
-//                             </td>
-//                         </tr>
-//                     `).join('')}
-//                 </tbody>
-//             </table>
-//         </div>
-//     `;
+  //   const exportToPDF = () => {
+  //     const hiddenContent = document.createElement('div');
+  //     hiddenContent.innerHTML = `
+  //         <div id="hidden-content">
+  //             <h2 style="text-align: center;padding-buttom:">Product Management Report</h2>
+  //             <table style="width: 100%; border-collapse: collapse;">
+  //                 <thead>
+  //                     <tr style="background-color: #6b46c1; color: #fff;">
+  //                         <th style="padding: 8px; border: 1px solid #ddd;">Product Name</th>
+  //                         <th style="padding: 8px; border: 1px solid #ddd;">Category</th>
+  //                         <th style="padding: 8px; border: 1px solid #ddd;">Old Stock</th>
+  //                         <th style="padding: 8px; border: 1px solid #ddd;">New Stock</th>
+  //                         <th style="padding: 8px; border: 1px solid #ddd;">Unit</th>
+  //                         <th style="padding: 8px; border: 1px solid #ddd;">Consumed</th>
+  //                         <th style="padding: 8px; border: 1px solid #ddd;">In-Hand Stock</th>
+  //                         <th style="padding: 8px; border: 1px solid #ddd;">Date</th>
+  //                     </tr>
+  //                 </thead>
+  //                 <tbody>
+  //                     ${products.map(product => `
+  //                         <tr>
+  //                             <td style="padding: 8px; border: 1px solid #ddd;">${product.name}</td>
+  //                             <td style="padding: 8px; border: 1px solid #ddd;">${product.category || "N/A"}</td>
+  //                             <td style="padding: 8px; border: 1px solid #ddd;">${product.old_stock ?? 0}</td>
+  //                             <td style="padding: 8px; border: 1px solid #ddd;">${product.new_stock ?? 0}</td>
+  //                             <td style="padding: 8px; border: 1px solid #ddd;">${product.unit || "N/A"}</td>
+  //                             <td style="padding: 8px; border: 1px solid #ddd;">${product.consumed ?? 0}</td>
+  //                             <td style="padding: 8px; border: 1px solid #ddd;">${product.in_hand_stock ?? 0}</td>
+  //                             <td style="padding: 8px; border: 1px solid #ddd;">
+  //                                 ${product.createdAt ? new Date(product.createdAt).toLocaleDateString() : "-"}
+  //                             </td>
+  //                         </tr>
+  //                     `).join('')}
+  //                 </tbody>
+  //             </table>
+  //         </div>
+  //     `;
 
-//     document.body.appendChild(hiddenContent);
+  //     document.body.appendChild(hiddenContent);
 
-//     html2canvas(hiddenContent).then((canvas) => {
-//         const pdf = new jsPDF('p', 'mm', 'a4');
-//         const imgData = canvas.toDataURL('image/png');
+  //     html2canvas(hiddenContent).then((canvas) => {
+  //         const pdf = new jsPDF('p', 'mm', 'a4');
+  //         const imgData = canvas.toDataURL('image/png');
 
-//         const imgWidth = 210;
-//         const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  //         const imgWidth = 210;
+  //         const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-//         let heightLeft = imgHeight;
-//         let position = 0;
+  //         let heightLeft = imgHeight;
+  //         let position = 0;
 
-//         pdf.text('Product Management Report', 20, 20);
+  //         pdf.text('Product Management Report', 20, 20);
 
-//         while (heightLeft > 0) {
-//             pdf.addImage(imgData, 'PNG', 0, position + 30, imgWidth, imgHeight);
+  //         while (heightLeft > 0) {
+  //             pdf.addImage(imgData, 'PNG', 0, position + 30, imgWidth, imgHeight);
 
-//             heightLeft -= 297;
-//             position -= 297;
+  //             heightLeft -= 297;
+  //             position -= 297;
 
-//             if (heightLeft > 0) {
-//                 pdf.addPage();
-//             }
-//         }
+  //             if (heightLeft > 0) {
+  //                 pdf.addPage();
+  //             }
+  //         }
 
-//         pdf.save('Product_Details.pdf');
-//         document.body.removeChild(hiddenContent); 
-//     }).catch((err) => console.error("Error exporting PDF:", err));
-// };
-
-
-//   const handleDownloadPDF = async () => {
-//     try {
-//         const response = await axios.get(`${baseurl}/export-pdf`, {
-//             responseType: 'blob', // Important for file download
-//         });
-
-//         const url = window.URL.createObjectURL(new Blob([response.data]));
-//         const link = document.createElement('a');
-//         link.href = url;
-//         link.setAttribute('download', 'Product_Report.pdf');
-//         document.body.appendChild(link);
-//         link.click();
-//     } catch (error) {
-//         console.error("Error downloading PDF:", error);
-//     }
-// };
+  //         pdf.save('Product_Details.pdf');
+  //         document.body.removeChild(hiddenContent); 
+  //     }).catch((err) => console.error("Error exporting PDF:", err));
+  // };
 
 
+  //   const handleDownloadPDF = async () => {
+  //     try {
+  //         const response = await axios.get(`${baseurl}/export-pdf`, {
+  //             responseType: 'blob', // Important for file download
+  //         });
 
+  //         const url = window.URL.createObjectURL(new Blob([response.data]));
+  //         const link = document.createElement('a');
+  //         link.href = url;
+  //         link.setAttribute('download', 'Product_Report.pdf');
+  //         document.body.appendChild(link);
+  //         link.click();
+  //     } catch (error) {
+  //         console.error("Error downloading PDF:", error);
+  //     }
+  // };
+
+
+
+  const handleOpenModal = (id) => {
+    setSelectedProductId(id);
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedProductId) return;
+
+    try {
+      const response = await axios.delete(`${baseurl}/delete/${selectedProductId}`);
+
+      if (response.data.success) {
+        toast.success("Product deleted successfully!");
+        setProducts((prevProducts) =>
+          prevProducts.filter((product) => product._id !== selectedProductId)
+        );
+      } else {
+        toast.error(response.data.message);
+      }
+    } catch (error) {
+      toast.error("Failed to delete product. Try again!");
+      console.error("Error deleting product:", error);
+    }
+
+    setIsModalOpen(false);
+    setSelectedProductId(null);
+  };
+
+  const handleOpenEditModal = (product) => {
+    setSelectedProduct(product);
+    setIsEditModalOpen(true);
+  };
+
+  const handleConfirmEdit = (updatedData) => {
+    console.log("Updated Data:", updatedData);
+    setIsEditModalOpen(false);
+  };
   return (
     <div className="max-w-6xl mx-auto mt-12 p-8 bg-white rounded-lg shadow-lg">
       <div className="flex justify-between items-center mb-6">
@@ -178,7 +225,7 @@ const ViewDetails = () => {
           Update Stock
         </button>
       </div>
- 
+
 
       <div className="mb-4 flex items-center gap-4">
         <input
@@ -195,7 +242,7 @@ const ViewDetails = () => {
         >
           <FaFilePdf size={20} />
         </button> */}
-           <PDFExportButton />
+        <PDFExportButton />
         {/* <select
           className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -216,7 +263,7 @@ const ViewDetails = () => {
         <div ref={contentRef} className="overflow-x-auto">
           <table className="w-full border-collapse rounded-lg overflow-hidden shadow-md">
             <thead>
-              <tr className="bg-purple-600 text-white text-left">
+              <tr className="bg-purple-600 text-white text-left ">
                 <th className="p-3">Product Name</th>
                 <th className="p-3">Category</th>
                 <th className="p-3">Old Stock</th>
@@ -225,7 +272,9 @@ const ViewDetails = () => {
                 <th className="p-3">Consumed</th>
                 <th className="p-3">In-Hand Stock</th>
                 <th className="p-3">Date</th>
+                <th className="p-3 item-center">Actions</th>
               </tr>
+
             </thead>
             <tbody>
               {paginatedProducts.map((product, index) => (
@@ -243,7 +292,38 @@ const ViewDetails = () => {
                   <td className="p-3">{product.in_hand_stock ?? 0}</td>
                   <td className="p-3">
                     {product.createdAt ? new Date(product.createdAt).toLocaleDateString() : "-"}
+
                   </td>
+                  <button
+                    onClick={() => handleOpenEditModal(product)}
+                    className="bg-yellow-500 ml-2 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-600 transition"
+                  >
+                    Edit
+                  </button>
+                  {isEditModalOpen && (
+                    <EditModal
+                      product={selectedProduct}
+                      onConfirm={handleConfirmEdit}
+                      onCancel={() => setIsEditModalOpen(false)}
+                    />
+                  )}
+                  <>
+                    <button
+                      onClick={() => handleOpenModal(product._id)}
+                      className="bg-red-500 ml-2 text-white px-4 py-2 rounded-lg shadow hover:bg-red-600 transition"
+                    >
+                      Delete
+                    </button>
+
+                    {isModalOpen && (
+                      <DeleteConfirmationModal
+                        onConfirm={handleConfirmDelete}
+                        onCancel={() => setIsModalOpen(false)}
+                      />
+                    )}
+                  </>
+
+
                 </tr>
               ))}
             </tbody>
@@ -260,10 +340,9 @@ const ViewDetails = () => {
 
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-           
+
             disabled={currentPage === 1}
           >
-         
           </button>
 
 
@@ -281,10 +360,9 @@ const ViewDetails = () => {
 
           <button
             onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-           
+
             disabled={currentPage === totalPages}
           >
-          
           </button>
         </div>
       )}

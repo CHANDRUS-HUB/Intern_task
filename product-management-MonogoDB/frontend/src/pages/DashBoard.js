@@ -70,7 +70,7 @@ const Dashboard = () => {
             </Card>
 
             {/* Pie Chart */}
-         <DonutChart/>
+            <DonutChart/>  
         </div>
         </>
     );
