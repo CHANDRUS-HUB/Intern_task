@@ -196,6 +196,64 @@ const getDashboardData = async (req, res) => {
 };
 
 
+
+const EditProduct = async (req, res) => {
+  const { productId, newStock, consumed } = req.body;
+
+  try {
+      const product = await Product.findById(productId);
+
+      if (!product) {
+          return res.status(404).json({ success: false, message: "Product not found!" });
+      }
+
+      const oldStock = product.old_stock || 0; 
+
+      const availableStock = oldStock + Number(newStock);
+
+      if (Number(consumed) > availableStock) {
+          return res.status(400).json({
+              success: false,
+              message: "Consumption cannot exceed available stock."
+          });
+      }
+
+      
+      const inHandStock = availableStock - Number(consumed);
+
+      
+      product.old_stock = availableStock;
+      product.in_hand_stock = inHandStock;
+      product.new_stock = Number(newStock);
+      product.consumed = Number(consumed);
+
+      await product.save();
+      console.log("✅ Updated Product Values:", {
+        old_stock: product.old_stock,
+        new_stock: product.new_stock,
+        consumed: product.consumed,
+        in_hand_stock: product.in_hand_stock
+    });
+    
+      res.status(200).json({
+          success: true,
+          message: "Product details updated successfully!",
+          product
+      });
+
+  } catch (error) {
+      res.status(500).json({
+          success: false,
+          message: "Server error occurred.",
+          error: error.message
+      });
+  }
+};
+
+
+
+
+
 const deleteProduct = async (req, res) => {
   const { id } = req.params;
   
@@ -234,4 +292,4 @@ const deleteProduct = async (req, res) => {
 
 
 
-module.exports = { getProducts, addProduct, updateProductByName, getProductByName ,getDashboardData,deleteProduct };
+module.exports = { getProducts,EditProduct, addProduct, updateProductByName, getProductByName ,getDashboardData,deleteProduct };

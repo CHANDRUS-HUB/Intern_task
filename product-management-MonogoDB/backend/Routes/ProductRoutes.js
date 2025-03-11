@@ -3,7 +3,8 @@ const {
   getProducts,
   addProduct,
   updateProductByName,
-  getProductByName,getDashboardData ,deleteProduct
+  getProductByName,getDashboardData ,deleteProduct,
+  EditProduct
 } = require("../Controllers/ProductController");
 const { exportPDF} = require('../Controllers/PdfControlers');
 
@@ -27,5 +28,6 @@ router.get("/product/:name", getProductByName);
 
 router.delete("/delete/:id",deleteProduct);
 
+router.put("/edit-product",EditProduct)
 
 module.exports = router;

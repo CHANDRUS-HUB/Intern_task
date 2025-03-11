@@ -94,11 +94,6 @@ export const updateProduct = async (name, { newStock, unit, consumed }) => {
 };
 
 
-
-
-
-
-
 export const downloadPDF = async () => {
     try {
         const response = await axios.get(`${baseurl}/export-pdf`, {
@@ -109,17 +104,17 @@ export const downloadPDF = async () => {
         const blob = new Blob([response.data], { type: 'application/pdf' });
         const url = window.URL.createObjectURL(blob);
 
-        // Create a download link
+    
         const link = document.createElement('a');
         link.href = url;
         link.download = 'Product_List.pdf';
         document.body.appendChild(link);
 
-        // Trigger download and cleanup
+      
         link.click();
         link.remove();
 
-        // Free up memory
+      
         window.URL.revokeObjectURL(url);
     } catch (error) {
         console.error('Error downloading PDF:', error);
