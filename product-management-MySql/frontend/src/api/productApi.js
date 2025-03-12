@@ -11,6 +11,16 @@ export const getProducts= async (productData) => {
   }
 };
 
+export const deleteProduct = async (productId) => {
+  try {
+    const response = await axios.delete(`${baseurl}/history/${productId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    throw error;
+  }
+};
+
 
 export const addProduct = async (productData) => {
   try {
