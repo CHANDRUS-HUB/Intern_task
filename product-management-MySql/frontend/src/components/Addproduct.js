@@ -123,8 +123,8 @@ const AddProduct = () => {
       unit: product.unit,
       consumed: parseFloat(product.consumed),
     };
-
-    setLoading(true);
+   
+   
     try {
       const result = await addProduct(productData);
       console.log("Add Product API result:", result);
@@ -137,6 +137,7 @@ const AddProduct = () => {
         unit: "",
         consumed: "",
       });
+      // setTimeout(() => toast.success("Product added successfully!"), 3000);
       setProducts([]);
       setUnits([]);
       setKeywords([]);

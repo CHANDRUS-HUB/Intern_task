@@ -2,21 +2,21 @@
 const User = require("../Models/Userdb");
 const jwt = require("jsonwebtoken");
 
+const protect = (req, res, next) => {
+    const token = req.cookies?.jwt || req.headers['authorization']?.split(' ')[1];
+    console.log("Received Cookies:", req.cookies);
+    if (!token) {
+        return res.status(401).json({ isAuthenticated: false, message: "No token provided. Access denied." });
+    }
 
-const protect = async (req, res, next) => {
     try {
-       
-        const token = req.cookies.jwt;
-        if (!token) return res.status(401).json({ message: "Not authorized, no token" });
-
-         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-       
-        req.user = await User.findById(decoded.id).select("-password");
-        next();
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
+        next(); 
     } catch (error) {
-       
-        res.status(401).json({ message: "Not authorized, invalid token" });
+        res.status(401).json({ isAuthenticated: false, message: "Invalid token. Access denied." });
     }
 };
+
 
 module.exports = protect;

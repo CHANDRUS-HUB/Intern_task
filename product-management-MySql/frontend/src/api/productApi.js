@@ -13,7 +13,7 @@ export const getProducts= async (productData) => {
 
 export const deleteProduct = async (productId) => {
   try {
-    const response = await axios.delete(`${baseurl}/history/${productId}`);
+    const response = await axios.delete(`${baseurl}/delete/${productId}`);
     return response.data;
   } catch (error) {
     console.error("Error deleting product:", error);
@@ -61,3 +61,21 @@ export const getProductByName = async (name) => {
     return null; 
   }
 };
+
+
+export const checkAuth = async () => {
+  try {
+      const response = await fetch(`${baseurl}/auth-check`, {
+          method: 'GET',
+          credentials: 'include'  // Required to send cookies
+      });
+
+      const data = await response.json();
+      return data.isAuthenticated;
+  } catch (error) {
+      console.error("Auth check failed:", error);
+      return false;
+  }
+};
+
+

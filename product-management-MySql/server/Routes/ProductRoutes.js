@@ -4,7 +4,7 @@ const { updateProductByName } = require("../Controllers/ProductController");
 const db = require("../config/database"); 
 const router = express.Router();
 const pool = require("../config/database");
-
+// const protect = require("../middleware/ProtectedRoute");
 
 router.get("/categories", async (req, res) => {
     try {
@@ -132,7 +132,7 @@ router.get("/keywords/:categoryId", async (req, res) => {
 });
 
 
-router.delete('/history/:id', async (req, res) => {
+router.delete('/delete/:id', async (req, res) => {
   const { id } = req.params;
 
   if (!id) {

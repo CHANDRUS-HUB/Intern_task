@@ -15,12 +15,12 @@ const Product = sequelize.define("Product", {
   hooks: {
     beforeCreate: async (product) => {
       try {
-        // Validate required fields
+        
         if (!product.name || !product.unit || product.new_stock === undefined || product.consumed === undefined) {
           throw new Error("All fields are required!");
         }
 
-        // Assign category based on keywords if not explicitly set
+       
         if (!product.category || product.category === "General") {
           const categories = await Category.findAll();
           const productName = product.name.toLowerCase();
@@ -41,11 +41,11 @@ const Product = sequelize.define("Product", {
           product.category = matchedCategory;
         }
 
-        // Auto-calculate in-hand stock
+      
         product.in_hand_stock = product.old_stock + product.new_stock - product.consumed;
       } catch (error) {
         console.error("Error in beforeCreate hook:", error.message);
-        throw error; // Ensures Sequelize catches the error
+        throw error; 
       }
     }
   }

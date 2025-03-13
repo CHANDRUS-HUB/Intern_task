@@ -1,4 +1,4 @@
-require('dotenv').config(); // Add this line to load .env variables
+require('dotenv').config(); 
 
 const { Sequelize } = require("sequelize");
 
@@ -7,14 +7,14 @@ const sequelize = new Sequelize(
     process.env.MYSQL_USER,
     process.env.MYSQL_PASSWORD,
     {
-        host: "localhost",        // Ensure this matches your MySQL host
+        host: "localhost",        
         dialect: "mysql",
-        logging: false            // Disable logs for cleaner output
+        logging: false           
     }
 );
 
 sequelize.authenticate()
-    .then(() => console.log("✅ Database connected successfully!"))
-    .catch((err) => console.error("❌ Error connecting to the database:", err));
+    .then(() => console.log("Database connected successfully!"))
+    .catch((err) => console.error("Error connecting to the database:", err));
 
 module.exports = sequelize;

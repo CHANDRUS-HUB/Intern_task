@@ -34,7 +34,7 @@ const DonutChart = () => {
             try {
                 const response = await axios.get(`${baseurl}/products`);
 
-                // Data Transformation
+                
                 const transformedData = response.data.reduce((acc, product) => {
                     const existingCategory = acc.find(item => item.name === product.category);
 
@@ -49,7 +49,6 @@ const DonutChart = () => {
 
                     return acc;
                 }, []);
-
                 const seriesData = transformedData.map(item => item.totalStock);
                 const labelsData = transformedData.map(item => item.name);
 
@@ -58,15 +57,14 @@ const DonutChart = () => {
                     series: seriesData,
                     options: { ...chartData.options, labels: labelsData }
                 });
-
             } catch (error) {
-                console.error("Error fetching dashboard data:", error);
+                console.error("Error fetching products:", error);
                 toast.error("Failed to load dashboard data.");
             }
         };
 
         fetchData();
-    }, [chartData]);
+    }, []);
 
     return (
         <Card className=''>

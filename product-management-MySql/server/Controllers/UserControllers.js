@@ -1,17 +1,22 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const UserDB = require("../Models/Userdb");  // Correct import of your model
+const UserDB = require("../Models/Userdb"); 
 
-// Generate JWT Token
-const generateToken = (userId, name, email, res) => {
-    const token = jwt.sign({ id: userId, name, email }, process.env.JWT_SECRET, { expiresIn: "3d" });
 
+const generateToken = (id, name, email, res) => {
+    const token = jwt.sign({ id, name, email }, process.env.JWT_SECRET, {
+        expiresIn: "1d"
+    });
+
+    
     res.cookie("jwt", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: "Strict",
+        maxAge: 24 * 60 * 60 * 1000 
     });
+
+    return token;
 };
 
 // Register User
@@ -49,46 +54,70 @@ const loginUser = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: "Invalid Password credentials" });
 
-        generateToken(user.id, user.name, user.email, res);
+        
+        if (!generateToken) {
+            console.error("generateToken function is undefined.");
+            return res.status(500).json({ message: "Token generation error." });
+        }
 
+        
+        const token = generateToken(user.id, user.name, user.email, res);
+
+        // Cookie Setup
         res.cookie("name", user.name, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "Strict",
+            secure:  process.env.NODE_ENV === "production"? true : false,
+            sameSite: 'Strict',
             maxAge: 24 * 60 * 60 * 1000,
         });
 
-        res.json({ message: "Logged in successfully", user });
+        res.json({
+            message: "Logged in successfully",
+            token,
+            user:{id: user._id, name: user.name, email:user.email}
+        });
+
     } catch (error) {
-        res.status(500).json({ message: "Server error", error });
+        console.error("Login Error:", error);  
+        res.status(500).json({ message: "Server error", error: error.message || error });
     }
 };
 
-// Update User
-const updateUserController = async (req, res) => {
-    const { name, email, password } = req.body;
-
-    try {
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const [updated] = await UserDB.update(
-            { name, password: hashedPassword },
-            { where: { email } }
-        );
-
-        if (!updated) return res.status(400).json({ message: "User does not exist" });
-
-        res.json({ message: "User updated successfully" });
-    } catch (error) {
-        console.error('Error in updating user:', error);
-        res.status(500).json({ error: 'Error in updating user' });
-    }
-};
 
 // Logout User
 const logoutUser = (req, res) => {
-    res.clearCookie("jwt");
-    res.json({ message: "Logged out successfully" });
+    res.clearCookie("jwt", { httpOnly: true, secure: true, sameSite: "None" });
+    res.status(200).json({ message: "Logged out successfully" });
 };
 
-module.exports = { registerUser, loginUser, logoutUser, updateUserController };
+
+//auth-check
+const authCheck = (req, res) => {
+    const token = req.cookies?.jwt; 
+
+    if (!token) {
+        return res.status(401).json({
+            isAuthenticated: false,
+            message: "No token provided. Access denied."
+        });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(403).json({
+                isAuthenticated: false,
+                message: "Invalid or expired token. Please log in again."
+            });
+        }
+
+        res.status(200).json({
+            isAuthenticated: true,
+            user: decoded, 
+            message: "Authentication successful."
+        });
+    });
+};
+
+
+
+module.exports = { registerUser, loginUser, logoutUser,authCheck };

@@ -143,7 +143,7 @@ const DailyConsumption = () => {
 
     try {
       await updateProduct(name, category, unit, updateData);
-      toast.success("Stock updated successfully!");
+        toast.success("Stock updated successfully!");
 
 
       setName("");
@@ -163,25 +163,26 @@ const DailyConsumption = () => {
     <div className="max-w-lg mx-auto mt-12 p-8 bg-white rounded-lg shadow-lg">
       <h2 className="text-3xl font-bold mb-6 text-gray-800 text-center">Daily Consumption</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
-
-        <div>
-          <label className="text-gray-700 font-medium">Select a Product</label>
-          <select name="name" value={name} onChange={handleChange} className="w-full p-3 border rounded-lg">
-            <option value="">Select Product</option>
-            {[...new Set(products.map((p) => p.name.toLowerCase()))]
-              .map((productName, index) => (
-                <option key={index} value={productName}>{productName.charAt(0).toUpperCase() + productName.slice(1)}</option>
-              ))}
-          </select>
-        </div>
-
-        <div>
+      <div>
           <label className="text-gray-700 font-medium">Category</label>
           <select name="category" value={category} onChange={handleChange} className="w-full p-3 border rounded-lg">
             <option value="">Select Category</option>
             {categories.map((c, index) => (
               <option key={index} value={c}>{c}</option>
             ))}
+          </select>
+        </div>
+
+        {/* Product Selection (Filtered by Category) */}
+        <div>
+          <label className="text-gray-700 font-medium">Select a Product</label>
+          <select name="name" value={name} onChange={handleChange} className="w-full p-3 border rounded-lg" disabled={!category}>
+            <option value="">Select Product</option>
+            {products
+              .filter((p) => p.category === category)
+              .map((p, index) => (
+                <option key={index} value={p.name}>{p.name.charAt(0).toUpperCase() + p.name.slice(1)}</option>
+              ))}
           </select>
         </div>
 
