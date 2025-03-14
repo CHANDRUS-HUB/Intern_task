@@ -3,16 +3,16 @@ const User = require("../Models/Userdb");
 const jwt = require("jsonwebtoken");
 
 const protect = (req, res, next) => {
-    const token = req.cookies?.jwt || req.headers['authorization']?.split(' ')[1];
-    console.log("Received Cookies:", req.cookies);
+    const token = req.jwt || req.headers['authorization']?.split(' ')[1];
+    console.log("Received Cookies:", req.jwt);
     if (!token) {
         return res.status(401).json({ isAuthenticated: false, message: "No token provided. Access denied." });
     }
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded;
-        next(); 
+        req.user = decoded; 
+        next();
     } catch (error) {
         res.status(401).json({ isAuthenticated: false, message: "Invalid token. Access denied." });
     }

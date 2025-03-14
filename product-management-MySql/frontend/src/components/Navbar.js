@@ -12,7 +12,7 @@ const Navbar = () => {
   const [loading, setLoading] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
-  const token = localStorage.getItem("token") || null;
+  const token = sessionStorage.getItem("token") || null;
 
 
   // Logout logic
@@ -26,7 +26,7 @@ const Navbar = () => {
         });
 
         // Remove token from localStorage (if stored there)
-        const token=localStorage.removeItem("token");
+        const token=sessionStorage.removeItem("token");
         setUser(null);
 
         toast.success("Logged out successfully!");
@@ -47,7 +47,7 @@ const Navbar = () => {
     <>
       {loading && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-40">
-          <h1 className="text-xl md:text-7xl font-bold text-white">Loading...</h1>
+          <h1 className="text-xl md:text-7xl font-bold text-white"></h1>
         </div>
       )}
 

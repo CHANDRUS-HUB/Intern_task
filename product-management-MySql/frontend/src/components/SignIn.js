@@ -44,16 +44,16 @@ const SignIn = () => {
                
                 window.location.href = "/home";
             }
-            console.log("Response Data:", response.data); // Check response data
-            console.log("Cookies (document.cookie):", document.cookie); // See if cookies are accessible
+            console.log("Response Data:", response.data); 
+            console.log("Cookies (document.cookie):", document.cookie); 
 
             const token = response.data.token; 
             setEmail("")
             setPassword("")
             
             if (token ) {
-                console.log("Token received:", token);
-                localStorage.setItem('token', token);
+                // console.log("Token received:", token);
+                sessionStorage.setItem('token', token);
             } else {
                 console.error("Token not received. Please try again.");
             }
@@ -85,7 +85,7 @@ const SignIn = () => {
                         <img src="./ProductIcon.icon" className="h-14 pb-2 pt-0 inline" alt="ProductManagement Logo" />
                         <h1 className="text-2xl font-sans pt-1 font-bold">Product Management</h1>
                     </div>
-                    <h2 className="text-lg font-serif mb-6 text-center text-blue-700">Access Your Account – Sign In Now!</h2>
+                    <h2 className="text-lg font-sans mb-6 text-center text-blue-700">Access Your Account – Sign In Now</h2>
 
                     {/* 🌥️ Cloud-like error message */}
                     {errors.general && (

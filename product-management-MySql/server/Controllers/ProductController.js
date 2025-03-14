@@ -1,8 +1,4 @@
 const pool = require("../config/database");
-const { getProductCategory } = require("./CategoryController");
-
-const unitTypes = ["kg", "g", "liter", "ml", "package", "piece", "box", "dozen", "bottle", "can"];
-
 
 const getProducts = async (req, res) => {
   try {
@@ -93,17 +89,15 @@ const addProduct = async (req, res) => {
   try {
     console.log("Received data:", req.body);
 
-    const { name, new_stock, unit, consumed } = req.body;
-    if (!name || new_stock === undefined || !unit || consumed === undefined) {
+    const { name, new_stock, unit } = req.body;
+    if (!name || new_stock === undefined || !unit) {
       return res.status(400).json({ error: "Missing required fields." });
     }
 
-    
     const detected = await detectCategory(name);
     const category_id = detected.id;
     const categoryName = detected.name;
 
-   
     const [allowedRows] = await pool.execute(
       "SELECT unit FROM units WHERE category_id = ?",
       [category_id]
@@ -115,7 +109,6 @@ const addProduct = async (req, res) => {
       });
     }
 
-   
     const checkQuery = `
       SELECT in_hand_stock FROM products 
       WHERE name = ? AND unit = ? 
@@ -124,23 +117,41 @@ const addProduct = async (req, res) => {
     const [existingProducts] = await pool.execute(checkQuery, [name, unit]);
     const old_stock = existingProducts.length > 0 ? existingProducts[0].in_hand_stock : 0;
 
-    // Calculate new in-hand stock automatically
-    const in_hand_stock = old_stock + new_stock - consumed;
+    // ✅ Corrected Duplicate Check Logic
+    const duplicateCheckQuery = `
+      SELECT id FROM products 
+      WHERE name = ? AND unit = ?
+    `;
+    const [existingProduct] = await pool.execute(duplicateCheckQuery, [
+      name, unit
+    ]);
 
-  
+    if (existingProduct.length > 0) {
+      return res.status(400).json({ error: "Product already exists!" });
+    }
+
+    const in_hand_stock = new_stock;
+
     const query = `
-      INSERT INTO products (name, category, category_id, old_stock, new_stock, unit, consumed, in_hand_stock, created_at) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO products (name, category, category_id, old_stock, new_stock, unit, in_hand_stock, created_at) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const createdAt = new Date().toISOString().slice(0, 19).replace("T", " ");
-    await pool.execute(query, [name, categoryName, category_id, old_stock, new_stock, unit, consumed, in_hand_stock, createdAt]);
+    await pool.execute(query, [name, categoryName, category_id, old_stock, new_stock, unit, in_hand_stock, createdAt]);
 
-    res.status(201).json({ message: "Product added successfully!", category: categoryName, category_id, in_hand_stock });
+    res.status(201).json({ 
+      message: "Product added successfully!", 
+      category: categoryName, 
+      category_id, 
+      in_hand_stock 
+    });
+
   } catch (error) {
     console.error("Error adding product:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 
 
 const fetchProducts = async (category) => {

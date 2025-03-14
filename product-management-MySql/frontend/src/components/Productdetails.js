@@ -7,6 +7,8 @@ import DeleteConfirmationModal from "../components/DeleteConfirm";
 import jsPDF from 'jspdf';
 import { FaFilePdf } from 'react-icons/fa';
 import html2canvas from 'html2canvas';
+// import { debounce } from "lodash"; 
+
 
 const ViewDetails = () => {
   const [products, setProducts] = useState([]);
@@ -40,29 +42,31 @@ const ViewDetails = () => {
     loadProducts();
   }, []);
 
-  const handleSearch = (e) => {
-    const value = e.target.value;
-    if (/\d/.test(value)) {
-      toast.error("Product name should not contain numbers.");
-      return;
-    }
-    setSearchTerm(value);
-  };
   
-  const handleCategoryandProductSearch = (e) => {
-    setSearchCategory(e.target.value);
-  };
+    // Handle Product Name Search
+    const handleSearch = (e) => {
+      const value = e.target.value;
+      if (/\d/.test(value)) {
+        toast.error("Product name should not contain numbers.");
+        return;
+      }
+      setSearchTerm(value);
+    };
+    
   
-  useEffect(() => {
-    const updatedProducts = products.filter(
-      (product) =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        product.category.toLowerCase().includes(searchCategory.toLowerCase())
-    );
+    
+    useEffect(() => {
+      const updatedProducts = products.filter(
+        (product) =>
+          product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+          product.category.toLowerCase().includes(searchCategory.toLowerCase())
+      );
+    
+      setFilteredProducts(updatedProducts);
+    }, [searchTerm, searchCategory, products]);
   
-    setFilteredProducts(updatedProducts);
-  }, [searchTerm, searchCategory, products]);
-
+      // Optional: Implement debouncing to reduce frequent updates
+     
 
 
   const handleSort = (key) => {
@@ -155,7 +159,7 @@ const ViewDetails = () => {
     try {
       await deleteProduct(productId);
       toast.success("Product deleted successfully!");
-      // Optionally update UI (remove deleted product from list)
+
     } catch (error) {
       toast.error("Error deleting product");
     }
@@ -189,21 +193,23 @@ const ViewDetails = () => {
         <div ref={dashboardRef} className="mb-4 flex items-center gap-4">
           <input
             type="text"
-            placeholder="Search by product name..."
+            placeholder="Search Product Name"
             value={searchTerm}
-            onChange={handleCategoryandProductSearch }
+           
+              onChange={
+                handleSearch
+              }
+              
             className="w-64 p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
-          />
 
-
+          /> 
           <button
-             onClick={exportToPDF}  
+            onClick={exportToPDF}
             className="bg-red-600 text-white p-2 rounded-full shadow hover:bg-red-700 transition"
             title="Export to PDF"
           >
             <FaFilePdf size={20} />
           </button>
-
         </div>
 
         {loading && <p className="text-center text-gray-500">Loading products...</p>}
@@ -228,23 +234,22 @@ const ViewDetails = () => {
               </thead>
               <tbody>
                 {paginatedProducts.map((product) => (
-                  <tr key={product._id} className="text-gray-700 text-center hover:bg-gray-200">
-                    <td className="p-3">{product.name}</td>
-                    <td className="p-3">{product.category || "N/A"}</td>
+                  <tr key={product._id} className="text-gray-700 border-solid text-center hover:bg-gray-200">
+                    <td className="p-3 border-solid">{product.name.charAt(0).toUpperCase() + product.name.slice(1)}</td>
+                    <td className="p-3">{product.category ? product.category.charAt(0).toUpperCase() + product.category.slice(1) : "N/A"}</td>
                     <td className="p-3">{product.old_stock ?? 0}</td>
                     <td className="p-3">{product.new_stock ?? 0}</td>
-                    <td className="p-3">{product.unit || "N/A"}</td>
+                    <td className="p-3">{product.unit ? product.unit.charAt(0).toUpperCase() + product.unit.slice(1) : "N/A"}</td>
                     <td className="p-3">{product.consumed ?? 0}</td>
                     <td className="p-3">{product.in_hand_stock ?? 0}</td>
                     <td className="p-3">
                       {product.createdAt ? new Date(product.createdAt).toLocaleDateString() : "-"}
                     </td>
-
                     <td className="p-3 flex gap-2 justify-center">
                       <button
-
                         onClick={() => {
-                          handleOpenEditModal(product); console.log(product + "edit");
+                          handleOpenEditModal(product);
+                          console.log(product + "edit");
                         }}
                         className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600"
                       >
@@ -252,9 +257,7 @@ const ViewDetails = () => {
                       </button>
                       <button
                         onClick={() => {
-
-                          handleDelete(product.id)
-
+                          handleDelete(product.id);
                         }}
                         className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
                       >
@@ -272,14 +275,6 @@ const ViewDetails = () => {
 
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 mt-6">
-            {/* <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-2 rounded-lg bg-gray-200"
-            >
-             
-            </button> */}
-
             {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
               <button
                 key={page}
@@ -290,14 +285,6 @@ const ViewDetails = () => {
                 {page}
               </button>
             ))}
-
-            {/* <button
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="px-3 py-2 rounded-lg bg-gray-200"
-            >
-              
-            </button> */}
           </div>
         )}
       </div>
@@ -314,12 +301,9 @@ const ViewDetails = () => {
         <DeleteConfirmationModal
           onConfirm={handleDelete}
           onCancel={() => setIsDeleteModalOpen(false)}
+          
         />
       )}
-
-
-
-
     </>
   );
 };
