@@ -21,11 +21,9 @@ const DailyConsumption = () => {
         const data = await getProducts();
         if (Array.isArray(data)) {
           setProducts(data);
-          const uniqueCategories = [...new Set(data.map(product => product.category))];
-          setCategories(uniqueCategories);
+          setCategories([...new Set(data.map(p => p.category))]);
         }
       } catch (error) {
-        console.error("Error fetching product list:", error);
         toast.error("Error fetching product list.");
       }
     };
@@ -33,44 +31,34 @@ const DailyConsumption = () => {
   }, []);
 
   const fetchProductDetails = useCallback(
-    debounce(async (productName, productCategory, productUnit) => {
-        if (!productName || !productCategory || !productUnit) return;
-
-        const selectedProduct = products.find(
-            (product) => product.name === productName && product.category === productCategory
-        );
-
-        if (selectedProduct) {
-            // Prioritize local data to avoid reset issues
-            setOldStock(selectedProduct.in_hand_stock || 0);
-            setInHandStock(selectedProduct.in_hand_stock || 0);
-            setUnit(selectedProduct.unit);
-        } else {
-            try {
-                const data = await getProductByName(productName);
-                console.log("Fetched product details:", data);
-
-                if (data && data.category === productCategory && data.unit === productUnit) {
-                    setOldStock(data.in_hand_stock || 0);
-                    setInHandStock(data.in_hand_stock || 0);
-                    setUnit(data.unit || "");
-                } else {
-                    setOldStock(0);
-                    setInHandStock(0);
-                    setUnit("");
-                }
-            } catch (error) {
-                console.error("Error fetching product details:", error);
-                toast.error("Error fetching product details.");
-            }
+    debounce(async (productName, productCategory) => {
+      if (!productName || !productCategory) return;
+      const matchingProducts = products.filter(p => p.name === productName && p.category === productCategory);
+      
+      if (matchingProducts.length) {
+        setUnits([...new Set(matchingProducts.map(p => p.unit))]);
+        if (!unit || !matchingProducts.some(p => p.unit === unit)) {
+          setUnit(matchingProducts[0].unit);
         }
+      }
     }, 500),
-    [products, setOldStock, setInHandStock, setUnit]
-);
+    [products]
+  );
 
   useEffect(() => {
-    if (name && category && unit) {
-      fetchProductDetails(name, category, unit);
+    if (name && category) fetchProductDetails(name, category);
+  }, [name, category]);
+
+  useEffect(() => {
+    if (!name || !category || !unit) return; 
+
+    const product = products.find(p => p.name === name && p.category === category && p.unit === unit);
+    if (product) {
+      setOldStock(product.in_hand_stock || 0);
+      setInHandStock(product.in_hand_stock || 0);
+    } else {
+      setOldStock(0);
+      setInHandStock(0);
     }
   }, [name, category, unit]);
 
@@ -84,69 +72,28 @@ const DailyConsumption = () => {
     const { name, value } = e.target;
 
     if (name === "category") {
-        setCategory(value);
-        setUnits([]);
-
-        const filteredProducts = products.filter((product) => product.category === value);
-        setUnits([...new Set(filteredProducts.map((product) => product.unit))]);
+      setCategory(value);
+      setUnits([]);
     }
-
     if (name === "name") {
-        setName(value);
-        setNewStock("");
-        setConsumed("");
-
-        const selectedProduct = products.find((product) => product.name === value);
-        if (selectedProduct) {
-            setUnit(selectedProduct.unit);
-            setOldStock(selectedProduct.in_hand_stock || 0);
-            setInHandStock(selectedProduct.in_hand_stock || 0);
-        } else {
-            setUnit("");
-            setOldStock(0);
-            setInHandStock(0);
-        }
+      setName(value);
+      setNewStock("");
+      setConsumed("");
+      setUnit("");
+      setOldStock(0);
+      setInHandStock(0);
     }
-
     if (name === "unit") {
-        setUnit(value);
-        if (name && category && oldStock !== undefined && inHandStock !== undefined) {
-            fetchProductDetails(name, category, value);
-        }
+      setUnit(value);
     }
-
-    if (name === "newStock" || name === "consumed") {
-        if (!/^\d*\.?\d*$/.test(value)) {
-            toast.error("Please enter a valid number.");
-            return;
-        }
-
-        if (Number(value) < 0) {
-            toast.error("Value cannot be negative.");
-            return;
-        }
-
-        if (name === "newStock") {
-            if (Number(value) > 1000) {
-                setNewStock("");
-                return toast.error("New stock cannot be greater than 1000.");
-            }
-            setNewStock(value);
-        }
-
-        if (name === "consumed") {
-            if (Number(value) > Number(newStock) + Number(oldStock)) {
-                setConsumed("");
-                return toast.error("Consumed cannot be greater than available stock!");
-            }
-            setConsumed(value);
-        }
-
-        const purchase = Number(newStock) || 0;
-        const consumedQty = Number(consumed) || 0;
-        setInHandStock(Number(oldStock) + purchase - consumedQty);
+    if (["newStock", "consumed"].includes(name)) {
+      if (!/^\d*\.?\d*$/.test(value)) {
+        return toast.error("Please enter a valid number.");
+      }
+      if (name === "newStock") setNewStock(value);
+      if (name === "consumed") setConsumed(value);
     }
-};
+  };
 
 
   const handleSubmit = async (e) => {
@@ -184,9 +131,10 @@ const DailyConsumption = () => {
       setName("");
       setCategory("");
       setUnit("");
+      setOldStock("")
       setNewStock("");
       setConsumed("");
-      setInHandStock(oldStock);
+      setInHandStock("");
     } catch (error) {
       toast.error(`Error updating stock: ${error.message}`);
     }

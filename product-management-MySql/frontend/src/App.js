@@ -16,12 +16,12 @@ function App() {
             <ToastContainer position="top-right" autoClose={2000} />
             <div className="pt-20">
                 <Routes>
-                    {/* Public Routes */}
+                  
                     <Route path="/" element={<Navigate to="/signin" />} />
                     <Route path="/signin" element={<SignIn />} />
                     <Route path="/signup" element={<SignUp />} />
 
-                    {/* Protected Routes */}
+                    
                     <Route element={<ProtectedRoute />}>
                         <Route
                             path="/home"
@@ -61,7 +61,7 @@ function App() {
                         />
                     </Route>
 
-                    {/* 404 Not Found Route */}
+                    
                     <Route path="*" element={<Navigate to="/signin" />} />
                 </Routes>
             </div>

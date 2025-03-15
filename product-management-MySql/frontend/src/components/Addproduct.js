@@ -22,7 +22,7 @@ const AddProduct = () => {
 
   useEffect(() => {
     axios
-      .get(`${baseurl}/categories`)
+      .get(`${baseurl}/categories`,{ withCredentials: true })
       .then((response) => {
         console.log("Fetched categories:", response.data);
         setCategories(response.data);
@@ -52,17 +52,17 @@ const AddProduct = () => {
 
     try {
 
-      const keywordRes = await axios.get(`${baseurl}/keywords/${selectedCategoryId}`);
+      const keywordRes = await axios.get(`${baseurl}/keywords/${selectedCategoryId} `,{ withCredentials: true });
       console.log("Keywords response:", keywordRes.data);
       setKeywords(keywordRes.data.keywords || []);
 
 
-      const unitRes = await axios.get(`${baseurl}/units/${selectedCategoryId}`);
+      const unitRes = await axios.get(`${baseurl}/units/${selectedCategoryId}`,{ withCredentials: true });
       console.log("Units response:", unitRes.data);
       setUnits(unitRes.data.units || []);
 
 
-      const productRes = await axios.get(`${baseurl}/products/${selectedCategoryId}`);
+      const productRes = await axios.get(`${baseurl}/products/${selectedCategoryId}`,{ withCredentials: true });
       console.log("Products response:", productRes.data);
       setProducts(productRes.data || []);
     } catch (error) {
@@ -128,7 +128,7 @@ const handleSubmit = async (e) => {
   try {
     const response = await addProduct(productData);
 
-    // 🔹 Successful product addition
+    
     toast.success("Product added successfully!");
 
     setProduct({
@@ -144,15 +144,15 @@ const handleSubmit = async (e) => {
   } catch (error) {
     console.error("API Error:", error);
 
-    // 🔹 Handle 'Product already exists' error
+   
     if (error.error === "Product already exists!") {
       toast.error("Product already exists!");
     } 
-    // 🔹 Handle unit-specific errors
+   
     else if (error.error && error.error.includes("Unit")) {
       toast.error(error.error);
     } 
-    // 🔹 General Error Handling
+   
     else {
       toast.error("Error adding product. Please try again.");
     }

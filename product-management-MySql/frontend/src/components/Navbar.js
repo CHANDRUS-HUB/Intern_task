@@ -8,18 +8,18 @@ import { baseurl } from "../URL/url";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [, setUser] = useState(null);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
   const token = sessionStorage.getItem("token") || null;
-
+    const jwt=localStorage.getItem("jwt");
 
   // Logout logic
   const handleLogout = async () => {
     setLoading(true);
     try {
-        // Send a request to backend to clear the cookie
+       
         await fetch(`${baseurl}/logout`, {
             method: "POST",
             credentials: "include", // Ensures cookies are sent
@@ -61,43 +61,40 @@ const Navbar = () => {
           </Link>
 
           <div className="hidden md:flex space-x-4">
-            {  !token && token===null ? (
-          
-               <>
-            
-               <button
-                className="hover:text-white shadow-xl font-bold hover:bg-purple-600 px-4 py-2 rounded-lg"
-                onClick={() => navigate("/signUp")}
-              >
-                Sign Up
-              </button>
-              <button
-                className="hover:text-white shadow-xl font-bold hover:bg-purple-600 px-4 py-2 rounded-lg"
-                onClick={() => navigate("/signIn")}
-              >
-                Sign In
-              </button>
-             </>
-          ) : (
-            <>
-                 
-                 <NavLink to="/home" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-100 rounded-md transition-all">
-                 Home
-               </NavLink>
-               <NavLink to="/add-product" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-100 rounded-md transition-all">
-                 Add Product
-               </NavLink>
-               <NavLink to="/product-details" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-100 rounded-md transition-all">
-                 View Products
-               </NavLink>
-               <button
-                 className="hover:text-white shadow-xl font-bold hover:bg-purple-600 px-4 py-2 rounded-lg"
-                 onClick={() => setShowLogoutModal(true)}
-               >
-                 Log Out
-               </button>
-            </>
-          )}
+            {!token && !user && !jwt ? (
+              <>
+                <button
+                  className="hover:text-white shadow-xl font-bold hover:bg-purple-600 px-4 py-2 rounded-lg"
+                  onClick={() => navigate("/signUp")}
+                >
+                  Sign Up
+                </button>
+                <button
+                  className="hover:text-white shadow-xl font-bold hover:bg-purple-600 px-4 py-2 rounded-lg"
+                  onClick={() => navigate("/signIn")}
+                >
+                  Sign In
+                </button>
+              </>
+            ) : (
+              <>
+                <NavLink to="/home" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-100 rounded-md transition-all">
+                  Home
+                </NavLink>
+                <NavLink to="/add-product" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-100 rounded-md transition-all">
+                  Add Product
+                </NavLink>
+                <NavLink to="/product-details" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-100 rounded-md transition-all">
+                  View Products
+                </NavLink>
+                <button
+                  className="hover:text-white shadow-xl text-gray-700 text-lg font-bold hover:bg-purple-600 px-4 py-2 rounded-lg"
+                  onClick={() => setShowLogoutModal(true)}
+                >
+                  Log Out
+                </button>
+              </>
+            )}
           </div>
 
           <button
@@ -107,6 +104,45 @@ const Navbar = () => {
             {isOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
         </div>
+
+        {isOpen && (
+          <div className="md:hidden flex flex-col space-y-4 mt-4 px-6">
+            {!token ? (
+              <>
+                <button
+                  className="hover:text-white shadow-xl font-bold hover:bg-purple-600 px-4 py-2 rounded-lg"
+                  onClick={() => navigate("/signUp")}
+                >
+                  Sign Up
+                </button>
+                <button
+                  className="hover:text-white shadow-xl font-bold hover:bg-purple-600 px-4 py-2 rounded-lg"
+                  onClick={() => navigate("/signIn")}
+                >
+                  Sign In
+                </button>
+              </>
+            ) : (
+              <>
+                <NavLink to="/home" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-100 rounded-md transition-all">
+                  Home
+                </NavLink>
+                <NavLink to="/add-product" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-100 rounded-md transition-all">
+                  Add Product
+                </NavLink>
+                <NavLink to="/product-details" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-100 rounded-md transition-all">
+                  View Products
+                </NavLink>
+                <button
+                  className="hover:text-white shadow-xl font-bold hover:bg-purple-600 px-4 py-2 rounded-lg"
+                  onClick={() => setShowLogoutModal(true)}
+                >
+                  Log Out
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </nav>
 
       {showLogoutModal && (

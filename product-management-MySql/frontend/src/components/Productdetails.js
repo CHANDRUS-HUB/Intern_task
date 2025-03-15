@@ -53,19 +53,21 @@ const ViewDetails = () => {
       setSearchTerm(value);
     };
     
-  
-    
     useEffect(() => {
+      if (!searchTerm && !searchCategory) {
+        setFilteredProducts(products); // Reset when search is cleared
+        return;
+      }
+    
       const updatedProducts = products.filter(
         (product) =>
-          product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          product.category.toLowerCase().includes(searchCategory.toLowerCase())
+          (searchCategory ? product.category.toLowerCase() === searchCategory.toLowerCase() : true) &&
+          (searchTerm ? product.name.toLowerCase().includes(searchTerm.toLowerCase()) : true)
       );
     
       setFilteredProducts(updatedProducts);
     }, [searchTerm, searchCategory, products]);
-  
-      // Optional: Implement debouncing to reduce frequent updates
+    
      
 
 
@@ -83,39 +85,41 @@ const ViewDetails = () => {
   const exportToPDF = () => {
     const hiddenContent = document.createElement('div');
     hiddenContent.innerHTML = `
-        <div id="hidden-content">
-            <h2 style="text-align: center; padding-top:0px padding-bottom: 9px">Product Management Report</h2>
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr style="background-color: #6b46c1; color: #fff;">
-                        <th style="padding: 8px; border: 1px solid #ddd;">Product Name</th>
-                        <th style="padding: 8px; border: 1px solid #ddd;">Category</th>
-                        <th style="padding: 8px; border: 1px solid #ddd;">Old Stock</th>
-                        <th style="padding: 8px; border: 1px solid #ddd;">New Stock</th>
-                        <th style="padding: 8px; border: 1px solid #ddd;">Unit</th>
-                        <th style="padding: 8px; border: 1px solid #ddd;">Consumed</th>
-                        <th style="padding: 8px; border: 1px solid #ddd;">In-Hand Stock</th>
-                        <th style="padding: 8px; border: 1px solid #ddd;">Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${products.map(product => `
-                        <tr>
-                            <td style="padding: 8px; border: 1px solid #ddd;">${product.name}</td>
-                            <td style="padding: 8px; border: 1px solid #ddd;">${product.category || "N/A"}</td>
-                            <td style="padding: 8px; border: 1px solid #ddd;">${product.old_stock ?? 0}</td>
-                            <td style="padding: 8px; border: 1px solid #ddd;">${product.new_stock ?? 0}</td>
-                            <td style="padding: 8px; border: 1px solid #ddd;">${product.unit || "N/A"}</td>
-                            <td style="padding: 8px; border: 1px solid #ddd;">${product.consumed ?? 0}</td>
-                            <td style="padding: 8px; border: 1px solid #ddd;">${product.in_hand_stock ?? 0}</td>
-                            <td style="padding: 8px; border: 1px solid #ddd;">
-                                ${product.createdAt ? new Date(product.createdAt).toLocaleDateString() : "-"}
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        </div>
+      <div id="hidden-content">
+        <h2 style="text-align: center; padding-top:0px ">Product Management Report</h2>
+        <br/>
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background-color: #6b46c1; color: #fff;">
+              <th style="padding: 8px; border: 1px solid #ddd;">Product Name</th>
+              <th style="padding: 8px; border: 1px solid #ddd;">Category</th>
+              <th style="padding: 8px; border: 1px solid #ddd;">Old Stock</th>
+              <th style="padding: 8px; border: 1px solid #ddd;">New Stock</th>
+              <th style="padding: 8px; border: 1px solid #ddd;">Unit</th>
+              <th style="padding: 8px; border: 1px solid #ddd;">Consumed</th>
+              <th style="padding: 8px; border: 1px solid #ddd;">In-Hand Stock</th>
+              <th style="padding: 8px; border: 1px solid #ddd;">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${products.map(product => `
+              <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;">${product.name}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${product.category || "N/A"}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${product.old_stock ?? 0}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${product.new_stock ?? 0}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${product.unit || "N/A"}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${product.consumed ?? 0}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${product.in_hand_stock ?? 0}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">
+                  ${product.createdAt ? new Date(product.createdAt).toLocaleDateString() : "-"}
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <p style="text-align: right; margin-top: 20px;">Generated on: ${new Date().toLocaleDateString()}</p>
+      </div>
     `;
 
     document.body.appendChild(hiddenContent);
@@ -184,7 +188,7 @@ const ViewDetails = () => {
           <h2 className="text-3xl font-bold text-gray-800">Product Details</h2>
           <button
             onClick={() => navigate("/daily-consumption")}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition"
+            className="bg-blue-600 text-white font-bold px-3 py-2 ml-0 mr-14 rounded-lg shadow hover:bg-blue-700 transition"
           >
             Update Stock
           </button>
@@ -205,10 +209,10 @@ const ViewDetails = () => {
           /> 
           <button
             onClick={exportToPDF}
-            className="bg-red-600 text-white p-2 rounded-full shadow hover:bg-red-700 transition"
+            className="bg-red-600 text-white font-semibold px-2 py-2 rounded flex items-center gap-2 shadow-md hover:bg-red-700 transition"
             title="Export to PDF"
           >
-            <FaFilePdf size={20} />
+            <FaFilePdf  />PDF
           </button>
         </div>
 
