@@ -1,5 +1,5 @@
 const pool = require("../config/database");
-
+const moment = require("moment");
 const getProducts = async (req, res) => {
   try {
     let query = `
@@ -134,9 +134,15 @@ const addProduct = async (req, res) => {
 
     const query = `
       INSERT INTO products (name, category, category_id, old_stock, new_stock, unit, in_hand_stock, created_at) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?,  ?)
     `;
-    const createdAt = new Date().toISOString().slice(0, 19).replace("T", " ");
+  
+
+    const createdAt = moment().format('YYYY-MM-DD HH:mm:ss');
+    
+    
+
+
     await pool.execute(query, [name, categoryName, category_id, old_stock, new_stock, unit, in_hand_stock, createdAt]);
 
     res.status(201).json({ 

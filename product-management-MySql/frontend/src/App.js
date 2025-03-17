@@ -20,7 +20,7 @@ function App() {
                     <Route path="/" element={<Navigate to="/signin" />} />
                     <Route path="/signin" element={<SignIn />} />
                     <Route path="/signup" element={<SignUp />} />
-
+                    
                     
                     <Route element={<ProtectedRoute />}>
                         <Route

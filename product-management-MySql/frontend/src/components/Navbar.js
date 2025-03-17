@@ -1,4 +1,4 @@
-import React, { useState} from "react";
+import React, { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
@@ -13,34 +13,34 @@ const Navbar = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
   const token = sessionStorage.getItem("token") || null;
-    const jwt=localStorage.getItem("jwt");
+  const jwt = localStorage.getItem("jwt");
 
   // Logout logic
   const handleLogout = async () => {
     setLoading(true);
     try {
-       
-        await fetch(`${baseurl}/logout`, {
-            method: "POST",
-            credentials: "include", // Ensures cookies are sent
-        });
 
-        // Remove token from localStorage (if stored there)
-        const token=sessionStorage.removeItem("token");
-        setUser(null);
+      await fetch(`${baseurl}/logout`, {
+        method: "POST",
+        credentials: "include", // Ensures cookies are sent
+      });
 
-        toast.success("Logged out successfully!");
-        setShowLogoutModal(false);
+      // Remove token from localStorage (if stored there)
+      const token = sessionStorage.removeItem("token");
+      setUser(null);
 
-        setTimeout(() => {
-            setLoading(false);
-            navigate("/signIn");
-        }, 2000);
-    } catch (error) {
+      toast.success("Logged out successfully!");
+      setShowLogoutModal(false);
+
+      setTimeout(() => {
         setLoading(false);
-        toast.error("Error logging out!");
+        navigate("/signIn");
+      }, 2000);
+    } catch (error) {
+      setLoading(false);
+      toast.error("Error logging out!");
     }
-};
+  };
 
 
   return (
@@ -127,7 +127,7 @@ const Navbar = () => {
                 <NavLink to="/home" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-100 rounded-md transition-all">
                   Home
                 </NavLink>
-                <NavLink to="/add-product" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-100 rounded-md transition-all">
+                <NavLink to="/add-product" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-purple-600tion-all">
                   Add Product
                 </NavLink>
                 <NavLink to="/product-details" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-100 rounded-md transition-all">
@@ -146,21 +146,22 @@ const Navbar = () => {
       </nav>
 
       {showLogoutModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm">
-            <h3 className="text-lg font-semibold text-gray-700">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 transition-opacity duration-300">
+          <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full">
+            <h3 className="text-xl font-bold text-gray-800 text-center">
               Are you sure you want to log out?
             </h3>
-            <div className="mt-4 flex justify-end">
+
+            <div className="mt-6 flex justify-center gap-4">
               <button
                 onClick={handleLogout}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 mr-2"
+                className="bg-red-500 text-white px-5 py-2.5 rounded-lg hover:bg-red-600 transition-all duration-200"
               >
                 Yes, Log Out
               </button>
               <button
                 onClick={() => setShowLogoutModal(false)}
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
+                className="bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg hover:bg-gray-300 transition-all duration-200"
               >
                 Cancel
               </button>
@@ -168,6 +169,7 @@ const Navbar = () => {
           </div>
         </div>
       )}
+
 
       <ToastContainer position="top-right" autoClose={3000} />
     </>

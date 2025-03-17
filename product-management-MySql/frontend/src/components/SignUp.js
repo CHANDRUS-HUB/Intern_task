@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
+import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import { baseurl } from '../URL/url';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { ToastContainer, toast } from 'react-toastify';
+import {  toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useNavigate } from 'react-router-dom';
 
-const Signup = () => {
+const SignUp = () => {
     const navigate = useNavigate();
+   
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -36,8 +37,9 @@ const Signup = () => {
 
     const evaluatePasswordStrength = (password) => {
         if (password.length < 6) return 'weak';
-        if (!/\d/.test(password) || !/[!@#$%^&*(),.?":{}|<>]/.test(password)) return 'normal';
         if (!/[A-Z]/.test(password) || !/[a-z]/.test(password)) return 'medium';
+        if (password.length >= 8 && /\d/.test(password) && /[!@#$%^&*(),.?":{}|<>]/.test(password)) return 'strong';
+        
         return 'strong';
     };
 
@@ -125,7 +127,7 @@ const Signup = () => {
             toast.error('Please enter a stronger password!');
             return;
         }
-
+        setLoading(true); 
         try {
             const response = await axios.post(`${baseurl}/register`, {
                 name: formData.name,
@@ -167,99 +169,95 @@ const Signup = () => {
     };
 
     return (
-        <>
-            {loading && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-40">
-                    <div className="loader"></div>
-                </div>
-            )}
-            <div className="flex justify-center items-center bg-gray-100 h-screen bg-cover bg-center" style={{ backgroundImage: "url('./signup.jpg')" }}>
-                <form className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md" onSubmit={handleSubmit}>
-                    <div className="text-center mb-6">
-                        <img
-                            src="./ProductManagementIcon.icon"
-                            className="h-14 pb-2 inline"
-                            alt="ProductManagement Logo"
-                        />
-                        <h1 className="text-2xl font-bold text-blue-700">Product Management</h1>
-                    </div>
-                    <h2 className="text-lg font-semibold mb-6 text-center text-gray-700">Create Your Account</h2>
-                    {errors.general && <p className="text-center text-red-600 mb-4">{errors.general}</p>}
-
-                    <div className="mb-4">
-                        <label className="block text-gray-700 font-semibold">Name</label>
-                        <input
-                            type="text"
+        <div className="flex items-center justify-center min-h-screen bg-[#f9f3f8] p-4">
+            <div className="bg-white shadow-lg rounded-lg flex flex-col-reverse md:flex-row w-full max-w-4xl">
+                
+                {/* Left Side - Sign In Form */}
+                <div className="md:w-1/2 flex flex-col justify-center p-8">
+                    <h2 className="text-2xl font-bold text-purple-700 mb-4">Sign Up</h2>
+                    
+                    <form className="space-y-4" onSubmit={handleSubmit}>
+                        <label className="text-sm font-semibold">Name</label>
+                        <input 
+                            type="text" 
                             name="name"
+                            placeholder="Enter your name" 
+                            className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
                             value={formData.name}
                             onChange={handleChange}
-                            className="w-full p-2 border border-gray-300 rounded mt-1"
                         />
                         {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-gray-700 font-semibold">Email</label>
-                        <input
-                            type="email"
+                        
+                        <label className="text-sm font-semibold">Email</label>
+                        <input 
+                            type="email" 
                             name="email"
+                            placeholder="user@email.com" 
+                            className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
                             value={formData.email}
                             onChange={handleChange}
-                            className="w-full p-2 border border-gray-300 rounded mt-1"
                         />
                         {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
-                    </div>
-
-                    <div className="mb-4 relative">
-                        <label className="block text-gray-700 font-semibold">Password</label>
+                        
+                        <label className="text-sm font-semibold">Password</label>
                         <div className="relative">
-                            <input
+                            <input 
+                                placeholder="Password" 
+                                className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 type={passwordVisible ? 'text' : 'password'}
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
-                                className="w-full p-2 border border-gray-300 rounded mt-1"
                             />
-                            <span
-                                className="absolute right-3 top-3 cursor-pointer text-gray-500"
-                                onClick={togglePasswordVisibility}
-                            >
+                            <span className="absolute right-3 top-3 cursor-pointer" onClick={togglePasswordVisibility}
+                               aria-label={passwordVisible ? 'Hide password' : 'Show password'}>
                                 {passwordVisible ? <FaEyeSlash /> : <FaEye />}
                             </span>
                         </div>
-                        {errors.password && <p className={`text-sm ${getStrengthColor()}`}>{errors.password}</p>}
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-gray-700 font-semibold">Confirm Password</label>
-                        <input
-                            type="password"
+                        {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
+                        <p className={`text-sm ${getStrengthColor()}`}>{passwordStrength}</p>
+                        
+                        <label className="text-sm font-semibold">Confirm Password</label>
+                        <input 
+                            type="password" 
                             name="confirmPassword"
+                            placeholder="Confirm Password" 
+                            className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
                             value={formData.confirmPassword}
                             onChange={handleChange}
-                            className="w-full p-2 border border-gray-300 rounded mt-1"
                         />
                         {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword}</p>}
-                    </div>
 
-                    <button
-                        type="submit"
-                        className={`w-full p-2 rounded-lg font-semibold text-white transition duration-200
-                            ${passwordStrength === 'weak' ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-700 hover:bg-blue-800'}
-                        `}
-                        disabled={passwordStrength === 'weak'}
-                    >
-                        Sign Up
-                    </button>
+                        <div className="flex justify-center">
+                            <button 
+                                className={`bg-purple-700 mt-4 mb-1 text-white px-4 py-2 rounded-md hover:bg-purple-800 transition transition-transform transform hover:scale-105
+                                    ${passwordStrength === 'weak' ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-700 hover:bg-blue-800'}
+                                `}
+                                disabled={passwordStrength === 'weak'}
+                            >
+                             {loading ? 'Signing up...' : 'Sign Up'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
 
-                    <p className="text-center mt-4 text-gray-600">
-                        Already have an account? <a href="/signin" className="text-blue-700 font-semibold">Log in</a>
+                {/* Right Side - Welcome Section */}
+                <div className="md:w-1/2 bg-purple-600 text-white flex flex-col items-center justify-start md:justify-center rounded-t-lg md:rounded-r-lg md:rounded-bl-none p-8">
+                    <h1 className="text-3xl font-bold mb-2">Welcome</h1>
+                    <p className="text-center text-sm font-mono mb-6">
+                        Sign in to Access Your Account And Manage Your Products.
                     </p>
-                </form>
-                <ToastContainer />
+                    <button
+                        onClick={() => navigate("/signIn")}
+                        className="bg-white text-purple-700 py-2 px-6 rounded-full font-medium hover:bg-gray-200 transition transition-transform transform hover:scale-105"
+                    >
+                        Sign In
+                    </button>
+                </div>
             </div>
-        </>
+            
+        </div>
     );
 };
 
-export default Signup;
+export default SignUp;
