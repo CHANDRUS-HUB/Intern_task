@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import { baseurl } from '../URL/url';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-
+import AOS from 'aos';
 const Signin = () => {
     const navigate = useNavigate();
 
@@ -26,8 +26,11 @@ const Signin = () => {
     const validate = () => {
         let tempErrors = {};
         if (!email) tempErrors.email = "Email is required";
+        else if (!/\S+@\S+\.\S+/.test(email)) tempErrors.email = "Invalid email format";
+
         if (!password) tempErrors.password = "Password is required";
         setErrors(tempErrors);
+
         return Object.keys(tempErrors).length === 0;
     };
 
@@ -43,31 +46,39 @@ const Signin = () => {
                 { email, password },
                 { withCredentials: true }
             );
-            if (response.data.message === "Logged in successfully") {
-                window.location.href = "/home";
+
+            const { message, token } = response.data;
+
+            if (message === "Logged in successfully") {
+                toast.success(message);
+                localStorage.setItem('token', token);
+                navigate("/home");  // Improved navigation
+            } else {
+                toast.error(message);
             }
-            const token = response.data.token;
+
             setEmail("");
             setPassword("");
-
-            if (token) {
-                sessionStorage.setItem('token', token);
-            } else {
-                console.error("Token not received. Please try again.");
-            }
         } catch (error) {
-            console.error("Login error:", error);
             setErrors({ general: "Login failed. Please try again." });
-            toast(error.message);
+            toast.error(error?.response?.data?.message || "Login failed!");
         } finally {
             setLoading(false);
         }
     };
+    useEffect(() => {
+        AOS.init({
+            duration: 1000,
+            once: false,
+            offset: 100,
+        });
+
+    }, []);
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 " data-aos="fade-up" >
             <div className="flex items-center justify-center min-h-screen bg-[#f9f3f8] p-4">
-                
+
                 <div className="bg-white shadow-lg rounded-lg flex flex-col md:flex-row w-full max-w-4xl">
 
                     {/* Left Side - Welcome Section */}
@@ -77,13 +88,14 @@ const Signin = () => {
                             Create account and manage your products.
                         </p>
                         <button
+
                             onClick={() => {
                                 navigate("/signUp");
                                 toggleView();
                             }}
                             className="bg-white text-purple-700 py-2 px-6 rounded-full font-medium hover:bg-gray-200 transition"
                         >
-                           Sign Up
+                            Sign Up
                         </button>
                     </div>
 

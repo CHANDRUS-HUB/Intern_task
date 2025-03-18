@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { baseurl } from '../URL/url';
 import Homepage from '../components/Homepage';
 import DonutChart from '../components/DonutChart';
-   
+import 'react-toastify/dist/ReactToastify.css'
 
 const Dashboard = () => {
     const [chartData, setChartData] = useState([]);
@@ -14,7 +14,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get(`${baseurl}/products`);
+                const response = await axios.get(`${baseurl}/products`,{ withCredentials: true });
                 
                 // Transform data for chart display
                 const transformedData = response.data.reduce((acc, product) => {

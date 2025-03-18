@@ -22,10 +22,11 @@ const EditModal = ({ product, onConfirm, onCancel }) => {
     const updateProductInMySQL = async () => {
         try {
             
-            const response = await fetch(`${baseurl}/history/${product.id}`, {
-                
+            const response = await fetch(`${baseurl}/history/${product.id}`,  {
+                credentials: "include",
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
+               
                 body: JSON.stringify({
                     new_stock: Number(newStock),
                     consumed: Number(consumed),
@@ -33,7 +34,7 @@ const EditModal = ({ product, onConfirm, onCancel }) => {
                 }),
             });
 
-            const result = await response.json();
+            const result = await response.json({withCredentials: true});
             if (!response.ok) throw new Error(result.message || "Failed to update product.");
 
             toast.success("Product updated successfully.");
@@ -46,10 +47,13 @@ const EditModal = ({ product, onConfirm, onCancel }) => {
 
     const handleConfirm = () => {
         if (newStock < 0 || consumed < 0) {
-            toast.error("Stock and consumption values cannot be negative.");
+            toast.error("Stock and consumption values cannot be Zero or negative.");
             return;
         }
-
+        if (newStock === 0 || consumed === 0) {
+            toast.error("Stock and consumption values cannot be Zero.");
+            return;
+        }
         if (isNaN(newStock) || isNaN(consumed)) {
             toast.error("Please enter valid numbers for stock and consumption.");
             return;

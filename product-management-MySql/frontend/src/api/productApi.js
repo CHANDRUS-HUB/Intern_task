@@ -2,18 +2,23 @@
 import axios from "axios";
 import { baseurl } from "../URL/url";
 
-export const getProducts= async (productData) => {
+
+export const getProducts = async (productData) => {
   try {
-    const response = await axios.get(`${baseurl}/products`, productData);
+    const response = await axios.get(`${baseurl}/products`, {
+      params: productData,
+      withCredentials: true,
+    });
     return response.data;
   } catch (error) {
     throw error.response?.data || error.message;
   }
 };
 
+
 export const deleteProduct = async (productId) => {
   try {
-    const response = await axios.delete(`${baseurl}/delete/${productId}`);
+    const response = await axios.delete(`${baseurl}/delete/${productId}`,{ withCredentials: true });
     return response.data;
   } catch (error) {
     console.error("Error deleting product:", error);
@@ -24,10 +29,10 @@ export const deleteProduct = async (productId) => {
 
 export const addProduct = async (productData) => {
   try {
-    const response = await axios.post(`${baseurl}/add-product`, productData);
+    const response = await axios.post(`${baseurl}/add-product`, productData,{ withCredentials: true });
     return response.data;
   } catch (error) {
-    throw error.response?.data || error.message;
+    throw error;
   }
 };
 
@@ -36,6 +41,7 @@ export const updateProduct = async (name, category, unit, updateData) => {
   try {
     const response = await axios.put(`${baseurl}/update-product/${name}/${category}/${unit}`, updateData, {
       headers: { "Content-Type": "application/json" },
+      withCredentials: true
     });
 
     return response.data;
@@ -48,7 +54,7 @@ export const updateProduct = async (name, category, unit, updateData) => {
 
 export const getProductByName = async (name) => {
   try {
-    const response = await fetch(`${baseurl}/product/${encodeURIComponent(name)}`);
+    const response = await fetch(`${baseurl}/product/${encodeURIComponent(name)}`,{ withCredentials: true });
 
     if (!response.ok) {
       throw new Error(`Failed to fetch product: ${response.statusText}`);
@@ -65,9 +71,9 @@ export const getProductByName = async (name) => {
 
 export const checkAuth = async () => {
   try {
-      const response = await fetch(`${baseurl}/auth-check`, {
+      const response = await fetch(`${baseurl}/auth-check`,{ withCredentials: true }, {
           method: 'GET',
-          credentials: 'include'  // Required to send cookies
+          credentials: 'include' 
       });
 
       const data = await response.json();

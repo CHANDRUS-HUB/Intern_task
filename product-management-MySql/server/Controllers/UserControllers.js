@@ -54,27 +54,13 @@ const loginUser = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: "Invalid Password credentials" });
 
-        
-        if (!generateToken) {
-            console.error("generateToken function is undefined.");
-            return res.status(500).json({ message: "Token generation error." });
-        }
-
-        
         const token = generateToken(user.id, user.name, user.email, res);
 
-        // Cookie Setup
-        res.cookie("name", user.name, {
-            httpOnly: true,
-            secure:  process.env.NODE_ENV === "production"? true : false,
-            sameSite: 'Strict',
-            maxAge: 24 * 60 * 60 * 1000,
-        });
-
+        res.setHeader("Authorization", `Bearer ${token}`); // Send token in the header
         res.json({
             message: "Logged in successfully",
             token,
-            user:{id: user._id, name: user.name, email:user.email}
+            user: { id: user._id, name: user.name, email: user.email }
         });
 
     } catch (error) {
@@ -86,7 +72,7 @@ const loginUser = async (req, res) => {
 
 // Logout User
 const logoutUser = (req, res) => {
-    res.clearCookie("jwt", { httpOnly: true, secure: true, sameSite: "None" });
+    res.clearCookie("jwt", { httpOnly: true, secure: true, sameSite: "Strict" });
     res.status(200).json({ message: "Logged out successfully" });
 };
 

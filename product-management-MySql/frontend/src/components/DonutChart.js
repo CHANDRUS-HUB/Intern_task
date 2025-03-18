@@ -32,7 +32,7 @@ const DonutChart = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get(`${baseurl}/products`);
+                const response = await axios.get(`${baseurl}/products`,{ withCredentials: true });
 
                 
                 const transformedData = response.data.reduce((acc, product) => {

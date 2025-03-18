@@ -1,5 +1,7 @@
 const pool = require("../config/database");
 const moment = require("moment");
+const db = require("../config/database"); 
+
 const getProducts = async (req, res) => {
   try {
     let query = `
@@ -158,20 +160,6 @@ const addProduct = async (req, res) => {
   }
 };
 
-
-
-const fetchProducts = async (category) => {
-  try {
-    const response = await axios.get(`http://localhost:5000/products/${category}`);
-    console.log("Fetched Products:", response.data); 
-    setProducts(response.data);
-  } catch (error) {
-    console.error("Error fetching products:", error);
-  }
-};
-
-
-
 const updateProductByName = async (req, res) => {
   try {
     const { name, category, unit } = req.params;
@@ -248,9 +236,124 @@ const updateProductByName = async (req, res) => {
 };
 
 
+// Get all categories
+const getCategories = async (req, res) => {
+    try {
+        const [rows] = await db.query("SELECT * FROM categories");
+        res.json(rows);
+    } catch (err) {
+        console.error("Database Query Error:", err);
+        res.status(500).json({ error: "Database error" });
+    }
+};
+
+// Get products by category ID
+const getProductsByCategoryId = async (req, res) => {
+    const { categoryId } = req.params;
+
+    try {
+        const [products] = await db.query(
+            "SELECT name, unit FROM products WHERE category_id = ?", 
+            [categoryId]
+        );
+        res.json(products);
+    } catch (err) {
+        console.error("Database Query Error:", err);
+        res.status(500).json({ error: "Database error" });
+    }
+};
+
+// Get units by category ID
+const getUnitsByCategoryId = async (req, res) => {
+    const { categoryId } = req.params;
+
+    try {
+        const [rows] = await db.query("SELECT unit FROM units WHERE category_id = ?", [categoryId]);
+        res.json({ units: rows.map(row => row.unit) });
+    } catch (error) {
+        console.error("Error fetching units:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
+// Get products by unit
+const getProductsByUnit = async (req, res) => {
+    const { unit } = req.params;
+
+    try {
+        const [rows] = await db.query("SELECT * FROM products WHERE unit = ?", [unit]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ message: "No products found for this unit." });
+        }
+
+        res.json(rows);
+    } catch (err) {
+        console.error("Database Query Error:", err);
+        res.status(500).json({ error: "Database error" });
+    }
+};
+
+// Delete product by ID
+ const deleteProduct = async (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({ message: "Invalid product ID." });
+    }
+
+    const [result] = await db.query("DELETE FROM products WHERE id = ?", [id]);
+
+    if (result.affectedRows === 0) {
+        return res.status(404).json({ message: "Product not found." });
+    }
+
+    res.status(200).json({ message: "Product deleted successfully." });
+};
+
+// Update product history
+const updateProductHistory = async (req, res) => {
+    const { id } = req.params;
+    const { new_stock, consumed } = req.body;
+
+    if (new_stock === undefined || consumed === undefined) {
+        return res.status(400).json({ error: "Both 'new_stock' and 'consumed' are required." });
+    }
+
+    try {
+        const [result] = await db.execute(
+            "UPDATE products SET new_stock = ?, consumed = ?, in_hand_stock = new_stock - consumed WHERE id = ?",
+            [new_stock, consumed, id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "No product history found with this ID." });
+        }
+
+        res.status(200).json({ message: "Product history updated successfully." });
+    } catch (error) {
+        console.error("Error updating product history:", error);
+        res.status(500).json({ error: "Failed to update product history." });
+    }
+};
+
+const getKeywordsByCategoryId= async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const [rows] = await pool.query("SELECT keyword FROM keywords WHERE category_id = ?", [categoryId]);
+    const keywords = rows.map((row) => row.keyword);
+    res.json({ keywords });
+  } catch (error) {
+    console.error("Error fetching keywords:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   getProducts,
   addProduct,
   updateProductByName,
-  getProductByDetails,fetchProducts 
+  getProductByDetails,getCategories,getProductsByCategoryId,
+  getUnitsByCategoryId,
+  getProductsByUnit,deleteProduct,updateProductHistory,getKeywordsByCategoryId
 };

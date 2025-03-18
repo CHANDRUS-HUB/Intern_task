@@ -3,12 +3,15 @@ import { getProducts, deleteProduct } from "../api/productApi";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import EditModal from "../components/EditModel";
-// import DeleteConfirmationModal from "../components/DeleteConfirm";
+
 import jsPDF from 'jspdf';
 import { FaFilePdf } from 'react-icons/fa';
 import html2canvas from 'html2canvas';
 import Editbtn from '../assets/edit.png';
 import Deletebtn from '../assets/delete.png';
+import 'react-toastify/dist/ReactToastify.css'
+import dayjs from 'dayjs';
+import { IoSearchSharp } from "react-icons/io5";
 import {
 
   TableContainer,
@@ -31,10 +34,11 @@ const ViewDetails = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const navigate = useNavigate();
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+
   const [currentPage,] = useState(1);
   const itemsPerPage = 10;
-  const [searchCategory,] = useState("");
+  const [, setOrder] = useState("asc");
+  const [, setOrderBy] = useState("");
   const dashboardRef = useRef(null);
   const [orderBy,] = useState("");
   const [order,] = useState("asc");
@@ -44,7 +48,7 @@ const ViewDetails = () => {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const data = await getProducts();
+        const data = await getProducts({ withCredentials: true });
         setProducts(Array.isArray(data) ? data : []);
         setFilteredProducts(Array.isArray(data) ? data : []);
       } catch (error) {
@@ -60,37 +64,54 @@ const ViewDetails = () => {
   const handleSearch = (e) => {
     const value = e.target.value;
     if (/\d/.test(value)) {
-      toast.error("Product name should not contain numbers.");
+      toast.error("Search term should not contain numbers.");
       return;
     }
     setSearchTerm(value);
   };
 
   useEffect(() => {
-    if (!searchTerm && !searchCategory) {
+    if (!searchTerm) {
       setFilteredProducts(products);
       return;
     }
 
     const updatedProducts = products.filter(
       (product) =>
-        (searchCategory ? product.category.toLowerCase() === searchCategory.toLowerCase() : true) &&
-        (searchTerm ? product.name.toLowerCase().includes(searchTerm.toLowerCase()) : true)
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     setFilteredProducts(updatedProducts);
-  }, [searchTerm, searchCategory, products]);
+  }, [searchTerm, products]);
 
-  const handleSort = (key) => {
-    const direction = sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc";
-    const sortedProducts = [...filteredProducts].sort((a, b) => {
-      if (a[key] < b[key]) return direction === "asc" ? -1 : 1;
-      if (a[key] > b[key]) return direction === "asc" ? 1 : -1;
-      return 0;
+
+  const handleSort = (column) => {
+    const isAsc = orderBy === column && order === "asc";
+
+    const sortedData = [...filteredProducts].sort((a, b) => {
+      if (column === "Date") {
+        return isAsc
+          ? dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf()
+          : dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf();
+      }
+
+      if (column === "Time") {
+        return isAsc
+          ? dayjs(a.createdAt).hour() * 60 + dayjs(a.createdAt).minute() -
+          (dayjs(b.createdAt).hour() * 60 + dayjs(b.createdAt).minute())
+          : dayjs(b.createdAt).hour() * 60 + dayjs(b.createdAt).minute() -
+          (dayjs(a.createdAt).hour() * 60 + dayjs(a.createdAt).minute());
+      }
+
+      return a[column]?.toString().localeCompare(b[column]?.toString());
     });
-    setFilteredProducts(sortedProducts);
-    setSortConfig({ key, direction });
+
+    setFilteredProducts(sortedData);
+    setOrderBy(column);
+    setOrder(isAsc ? "desc" : "asc");
   };
+
 
   const exportToPDF = () => {
     const hiddenContent = document.createElement('div');
@@ -101,6 +122,7 @@ const ViewDetails = () => {
         <table style="width: 100%; border-collapse: collapse;">
           <thead>
             <tr style="background-color: #6b46c1; color: #fff;">
+               <th style="padding: 8px; border: 1px solid #ddd;">S.NO</th>
               <th style="padding: 8px; border: 1px solid #ddd;">Product Name</th>
               <th style="padding: 8px; border: 1px solid #ddd;">Category</th>
               <th style="padding: 8px; border: 1px solid #ddd;">Old Stock</th>
@@ -113,8 +135,9 @@ const ViewDetails = () => {
             </tr>
           </thead>
           <tbody>
-            ${products.map(product => `
+            ${products.map((product, index)=> `
               <tr>
+               <td style="padding: 8px; border: 1px solid #ddd;">${index+1}</td>
                 <td style="padding: 8px; border: 1px solid #ddd;">${product.name}</td>
                 <td style="padding: 8px; border: 1px solid #ddd;">${product.category || "N/A"}</td>
                 <td style="padding: 8px; border: 1px solid #ddd;">${product.old_stock ?? 0}</td>
@@ -123,11 +146,13 @@ const ViewDetails = () => {
                 <td style="padding: 8px; border: 1px solid #ddd;">${product.consumed ?? 0}</td>
                 <td style="padding: 8px; border: 1px solid #ddd;">${product.in_hand_stock ?? 0}</td>
                 <td style="padding: 8px; border: 1px solid #ddd;">
-                  ${product.createdAt ? new Date(product.createdAt).toLocaleDateString() : "-"}
+                   ${product.createdAt
+        ? dayjs(product.createdAt).format("DD/MM/YYYY")
+        : "-"}
                 </td>
                 <td style="padding: 8px; border: 1px solid #ddd;">
-                ${product.createdAt
-        ? new Date(product.createdAt).toLocaleTimeString()
+            ${product.createdAt
+        ? dayjs(product.createdAt).format("hh:mm A")
         : "-"}
                 </td>
               </tr>
@@ -174,15 +199,45 @@ const ViewDetails = () => {
     setIsEditModalOpen(true);
   };
 
+  //   const handleConfirmEdit = async () => {
+  //     try {
+  //         console.log("Selected Product Data Before Sending:", selectedProduct);
+
+  //         await updateProductInMySQL(
+  //             selectedProduct.id,                 // Ensure this is a valid number
+  //             Number(selectedProduct.new_stock),   // Ensure this is converted to a number
+  //             Number(selectedProduct.consumed),    // Ensure this is converted to a number
+  //             Number(selectedProduct.in_hand_stock), // Ensure this is converted to a number
+  //             () => toast.success("Product updated successfully!")
+  //         );
+
+  //         setIsEditModalOpen(false);  // Close modal after successful update
+  //     } catch (error) {
+  //         console.error("Error updating product:", error);
+  //         toast.error("Error updating product. Please try again.");
+  //     }
+  // };
+
+
+  // Correct implementation for initial load
+
+
+
   const handleConfirmDelete = async () => {
     try {
       await deleteProduct(selectedProduct.id);
+
+      setProducts((prevProducts) =>
+        prevProducts.filter(product => product.id !== selectedProduct.id)
+      );
+
       toast.success("Product deleted successfully!");
-      setShowDeleteModel(false); // Close modal after deletion
+      setShowDeleteModel(false);
     } catch (error) {
-      toast.error("Error deleting product");
+      toast.error("Error deleting product.");
     }
   };
+
 
   const handleDeleteClick = (product) => {
     setSelectedProduct(product); // Set selected product for confirmation
@@ -210,135 +265,134 @@ const ViewDetails = () => {
         <h2 className="text-3xl font-bold ml-10 text-gray-800">Product Details</h2>
         <button
           onClick={() => navigate("/daily-consumption")}
-          className="bg-blue-600 mt-2 text-white font-bold px-3 py-2 ml-0 mr-14 rounded-lg shadow hover:bg-blue-700 transition"
+          className="bg-gray-600 mt-2 text-white font-bold px-3 py-2 ml-0 mr-14 rounded-lg shadow hover:bg-gray-700 transition"
         >
           Update Stock
         </button>
       </div>
       {loading && <p className="text-center text-gray-500">Loading products...</p>}
       {error && <p className="text-center text-red-500">{error}</p>}
-      {paginatedProducts.length > 0 ? (
-        <div className="overflow-x-auto ml-8">
-          <div ref={dashboardRef} className="mb-4 flex items-center mt-2 gap-4">
+
+      <div className="overflow-x-auto ml-8">
+        <div ref={dashboardRef} className="mb-4 flex items-center mt-2 gap-4">
+          <div className="relative w-64">
             <input
               type="text"
-              placeholder="Search Product Name"
+              placeholder="Search Product And Category"
               value={searchTerm}
               onChange={handleSearch}
-              className="w-64 p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-gray focus:outline-none"
+              className="w-full p-2 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-gray-500 focus:outline-none"
             />
-            <button
-              onClick={exportToPDF}
-              className="bg-red-600 text-white font-semibold px-2 py-2 rounded flex items-center gap-2 shadow-md hover:bg-red-700 transition"
-              title="Export to PDF"
-            >
-              <FaFilePdf />PDF
-            </button>
+            <IoSearchSharp className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400" />
           </div>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow className="bg-gray-200">
-                  {[
-                    "name",
-                    "category",
-                    "old_stock",
-                    "new_stock",
-                    "unit",
-                    "consumed",
-                    "in_hand_stock",
-                    "createdAt",
-                    "Time",
-                    "Actions",
-                  ].map((column) => (
-                    <TableCell key={column}>
-                      <TableSortLabel
-                        active={orderBy === column}
-                        direction={orderBy === column ? order : "asc"}
-                        onClick={() => handleSort(column)}
-                      >
-                        {column.replace("_", " ").toUpperCase()}
-                      </TableSortLabel>
+          <div className="grid grid-cols-1">
+            <div>{/* Your product display area */}</div>
+            <div className="text-right">
+              {filteredProducts.length === 0 && (
+                <p className="text-red-500">No products found.</p>
+              )}
+            </div>
+          </div>
+
+          <button
+            onClick={exportToPDF}
+            className="bg-red-600 text-white font-semibold px-2 py-2 rounded flex items-center gap-2 shadow-md hover:bg-red-700 transition"
+            title="Export to PDF"
+          >
+            <FaFilePdf />PDF
+          </button>
+        </div>
+
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow className="bg-gray-200">
+                {[
+                  "name",
+                  "category",
+                  "old_stock",
+                  "new_stock",
+                  "unit",
+                  "consumed",
+                  "in_hand_stock",
+                  "Date",
+                  "Time",
+                  "Actions",
+                ].map((column) => (
+                  <TableCell key={column}>
+                    <TableSortLabel
+                      active={orderBy === column}
+                      direction={orderBy === column ? order : "asc"}
+                      onClick={() => handleSort(column)}
+                    >
+                      {column.replace("_", " ").toUpperCase()}
+                    </TableSortLabel>
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody className="font-medium">
+
+              {filteredProducts
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell>{product.name}</TableCell>
+                    <TableCell >{product.category || "N/A"}</TableCell>
+                    <TableCell>{product.old_stock ?? 0}</TableCell>
+                    <TableCell>{product.new_stock ?? 0}</TableCell>
+                    <TableCell>{product.unit || "N/A"}</TableCell>
+                    <TableCell>{product.consumed ?? 0}</TableCell>
+                    <TableCell>{product.in_hand_stock ?? 0}</TableCell>
+
+                    <TableCell>
+                      {product.createdAt
+                        ? dayjs(product.createdAt).format("DD/MM/YYYY")
+                        : "-"}
                     </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody className="font-medium">
-                {filteredProducts
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell>{product.name}</TableCell>
-                      <TableCell >{product.category || "N/A"}</TableCell>
-                      <TableCell>{product.old_stock ?? 0}</TableCell>
-                      <TableCell>{product.new_stock ?? 0}</TableCell>
-                      <TableCell>{product.unit || "N/A"}</TableCell>
-                      <TableCell>{product.consumed ?? 0}</TableCell>
-                      <TableCell>{product.in_hand_stock ?? 0}</TableCell>
-                      <TableCell>
-                        {product.createdAt
-                          ? new Date(product.createdAt).toLocaleDateString()
-                          : "-"}
-                      </TableCell>
-                      <TableCell>
-                        {product.createdAt
-                          ? new Date(product.createdAt).toLocaleTimeString()
-                          : "-"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="p-3 flex gap-2 justify-center">
-                          <button
-                            onClick={() => handleOpenEditModal(product)}
-                            className="text-white px-4 py-2 rounded-lg "
-                          >
-                            <img src={Editbtn} className="h-5 w-5" alt="edit" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClick(product)}
-                            className="text-white px-4 py-2 rounded-lg"
-                          >
-                            <img src={Deletebtn} className="h-5 w-5" alt="delete" />
-                          </button>
+                    <TableCell>
+                      {product.createdAt
+                        ? dayjs(product.createdAt).format("hh:mm A")
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="p-3 flex gap-2 justify-center">
+                        <button
+                          onClick={() => handleOpenEditModal(product)}
+                          className="text-white px-4 py-2 rounded-lg "
+                        >
+                          <img src={Editbtn} className="h-5 w-5" alt="edit" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(product)}
+                          className="text-white px-4 py-2 rounded-lg"
+                        >
+                          <img src={Deletebtn} className="h-5 w-5" alt="delete" />
+                        </button>
 
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
 
 
-          <TablePagination
-            rowsPerPageOptions={[10, 20, 30]}
-            component="div"
-            count={filteredProducts.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
+        <TablePagination
+          rowsPerPageOptions={[10, 20, 30]}
+          component="div"
+          count={filteredProducts.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
 
-        </div>
-      ) : (
-        !loading && <p className="text-center text-gray-800">No products available.</p>
-      )}
+      </div>
 
-      {/* {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-6">
-          {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
-            <button
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              className={`px-4 py-2 rounded-lg transition ${currentPage === page ? "bg-blue-600 text-white" : "bg-gray-200"
-                }`}
-            >
-              {page}
-            </button>
-          ))}
-        </div>
-      )} */}
+
 
 
       {isEditModalOpen && (
@@ -348,6 +402,7 @@ const ViewDetails = () => {
           onCancel={() => setIsEditModalOpen(false)}
         />
       )}
+
 
       {showDeleteModel && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getProductByName, getProducts, updateProduct } from "../api/productApi";
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
+import 'react-toastify/dist/ReactToastify.css'
 
 const DailyConsumption = () => {
   const [name, setName] = useState("");
@@ -14,6 +15,7 @@ const DailyConsumption = () => {
   const [newStock, setNewStock] = useState("");
   const [consumed, setConsumed] = useState("");
   const [inHandStock, setInHandStock] = useState(0);
+
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -98,47 +100,47 @@ const DailyConsumption = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
-
 
     if ((!newStock || newStock.trim() === "") && (!consumed || consumed.trim() === "")) {
-      return toast.error("Please enter either new stock or consumed quantity.");
+        return toast.error("Please enter either new stock or consumed quantity.");
     }
-    
-   
+
     if (Number(consumed) > (Number(oldStock) + Number(newStock))) {
-      return toast.error("Consumed quantity cannot be greater than available stock.");
+        return toast.error("Consumed quantity cannot be greater than available stock.");
     }
-    
-    
+
     if (!name || !category || !unit) {
-      return toast.error("Please select a valid product, category, and unit.");
+        return toast.error("Please select a valid product, category, and unit.");
     }
+
     const selectedProduct = products.find((p) => p.name === name) || null;
 
     if (selectedProduct && selectedProduct.category !== category) {
-      return toast.error("Selected product does not match the selected category.");
+        return toast.error("Selected product does not match the selected category.");
     }
-    
-  
+
     const updateData = { new_stock: newStock, consumed };
 
     try {
-      await updateProduct(name, category, unit, updateData);
+        await updateProduct(name, category, unit, updateData);
+
+      
         toast.success("Stock updated successfully!");
 
-
-      setName("");
-      setCategory("");
-      setUnit("");
-      setOldStock("")
-      setNewStock("");
-      setConsumed("");
-      setInHandStock("");
+        
+        setTimeout(() => {
+            setName("");
+            setCategory("");
+            setUnit("");
+            setOldStock("");
+            setNewStock("");
+            setConsumed("");
+            setInHandStock("");
+        }, 500);
     } catch (error) {
-      toast.error(`Error updating stock: ${error.message}`);
+        toast.error(`Error updating stock: ${error.message}`);
     }
-  };
+};
 
 
 

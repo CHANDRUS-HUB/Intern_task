@@ -27,13 +27,38 @@ const SignUp = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        const trimmedValue = value.trim();
+    
+        // Regex for name validation (only alphabets, max 10 characters)
+        const nameRegex = /^[A-Za-z\s]{1,10}$/;
+    
+        // Regex for email validation (standard email format)
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    
+        if (name === 'name') {
+            if (!nameRegex.test(trimmedValue)) {
+                setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    [name]: 'Name must be alphabetic and max 10 characters.'
+                }));
+                return;
+            } else {
+                setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    [name]: ''
+                }));
+            }
+        }
+     
+    
         setFormData((prevData) => ({
             ...prevData,
-            [name]: value
+            [name]: trimmedValue
         }));
-
-        validateField(name, value);
     };
+        
+    
+    
 
     const evaluatePasswordStrength = (password) => {
         if (password.length < 6) return 'weak';
@@ -69,9 +94,7 @@ const SignUp = () => {
                         case 'weak':
                             error = 'Weak: Must be at least 6 characters';
                             break;
-                        case 'normal':
-                            error = 'Normal: Add a number & special character';
-                            break;
+                      
                         case 'medium':
                             error = 'Medium: Add both uppercase & lowercase';
                             break;
@@ -138,13 +161,12 @@ const SignUp = () => {
             toast.success(response.data.message);
            
             setFormData({ name: '', email: '', password: '', confirmPassword: '' });
-            setLoading(true);
             setTimeout(() => {
                 navigate('/signin');
             }, 2000);
           
         } catch (error) {
-            if (error.response && error.response.data && error.response.data.errors) {
+            if (error?.response?.data?.errors) {
                 const serverErrors = error.response.data.errors;
                 let formErrors = {};
                 serverErrors.forEach(err => {
@@ -155,19 +177,25 @@ const SignUp = () => {
                 console.error('Signup Error:', error.response ? error.response.data : error.message);
                 setErrors({general:error.response?.data?.message || 'Server error'});
             }
+
+            setLoading(false )
         }
     };
 
     const getStrengthColor = () => {
-        switch (passwordStrength) {
-            case 'weak': return 'text-red-500';
-            case 'normal': return 'text-orange-500';
-            case 'medium': return 'text-yellow-500';
-            case 'strong': return 'text-green-500';
-            default: return 'text-red-500';
-        }
+        const strengthColors = {
+            weak: 'text-red-500',
+            normal: 'text-orange-500',
+            medium: 'text-yellow-500',
+            strong: 'text-green-500'
+        };
+        return strengthColors[passwordStrength] || '';
     };
-
+    
+    const ErrorMessage = ({ message }) => (
+        <p className="text-red-500 text-sm">{message}</p>
+    );
+    
     return (
         <div className="flex items-center justify-center min-h-screen bg-[#f9f3f8] p-4">
             <div className="bg-white shadow-lg rounded-lg flex flex-col-reverse md:flex-row w-full max-w-4xl">
@@ -186,7 +214,8 @@ const SignUp = () => {
                             value={formData.name}
                             onChange={handleChange}
                         />
-                        {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+                      {errors.name && <ErrorMessage message={errors.name} />}
+
                         
                         <label className="text-sm font-semibold">Email</label>
                         <input 
@@ -197,7 +226,8 @@ const SignUp = () => {
                             value={formData.email}
                             onChange={handleChange}
                         />
-                        {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+                         {errors.email && <ErrorMessage message={errors.email} />}
+
                         
                         <label className="text-sm font-semibold">Password</label>
                         <div className="relative">
@@ -207,14 +237,17 @@ const SignUp = () => {
                                 type={passwordVisible ? 'text' : 'password'}
                                 name="password"
                                 value={formData.password}
-                                onChange={handleChange}
+                                onChange={(e) => {
+                                    handleChange(e);
+                                    setPasswordStrength(evaluatePasswordStrength(e.target.value));
+                                }}
                             />
                             <span className="absolute right-3 top-3 cursor-pointer" onClick={togglePasswordVisibility}
                                aria-label={passwordVisible ? 'Hide password' : 'Show password'}>
                                 {passwordVisible ? <FaEyeSlash /> : <FaEye />}
                             </span>
                         </div>
-                        {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
+                        {errors.password && <ErrorMessage message={errors.password} />}
                         <p className={`text-sm ${getStrengthColor()}`}>{passwordStrength}</p>
                         
                         <label className="text-sm font-semibold">Confirm Password</label>
@@ -226,14 +259,14 @@ const SignUp = () => {
                             value={formData.confirmPassword}
                             onChange={handleChange}
                         />
-                        {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword}</p>}
+                        {errors.confirmPassword && <ErrorMessage message={errors.confirmPassword} />}
 
                         <div className="flex justify-center">
                             <button 
                                 className={`bg-purple-700 mt-4 mb-1 text-white px-4 py-2 rounded-md hover:bg-purple-800 transition transition-transform transform hover:scale-105
                                     ${passwordStrength === 'weak' ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-700 hover:bg-blue-800'}
                                 `}
-                                disabled={passwordStrength === 'weak'}
+                                disabled={passwordStrength === 'weak'||loading}
                             >
                              {loading ? 'Signing up...' : 'Sign Up'}
                             </button>

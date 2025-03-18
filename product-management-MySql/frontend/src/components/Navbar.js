@@ -12,8 +12,8 @@ const Navbar = () => {
   const [loading, setLoading] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
-  const token = sessionStorage.getItem("token") || null;
-  const jwt = localStorage.getItem("jwt");
+  const token = localStorage.getItem("token") || null;
+
 
   // Logout logic
   const handleLogout = async () => {
@@ -26,7 +26,7 @@ const Navbar = () => {
       });
 
       // Remove token from localStorage (if stored there)
-      const token = sessionStorage.removeItem("token");
+      localStorage.removeItem("token");
       setUser(null);
 
       toast.success("Logged out successfully!");
@@ -61,7 +61,7 @@ const Navbar = () => {
           </Link>
 
           <div className="hidden md:flex space-x-4">
-            {!token && !user && !jwt ? (
+            {!token && !user  ? (
               <>
                 <button
                   className="hover:text-white shadow-xl font-bold hover:bg-purple-600 px-4 py-2 rounded-lg"
@@ -78,17 +78,17 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                <NavLink to="/home" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-100 rounded-md transition-all">
+                <NavLink to="/home" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-400 rounded-md transition-all">
                   Home
                 </NavLink>
-                <NavLink to="/add-product" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-100 rounded-md transition-all">
+                <NavLink to="/add-product" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-400 rounded-md transition-all">
                   Add Product
                 </NavLink>
-                <NavLink to="/product-details" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-100 rounded-md transition-all">
+                <NavLink to="/product-details" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-400 rounded-md transition-all">
                   View Products
                 </NavLink>
                 <button
-                  className="hover:text-white shadow-xl text-gray-700 text-lg font-bold hover:bg-purple-600 px-4 py-2 rounded-lg"
+                  className="hover:text-white shadow-xl text-gray-700 text-lg font-bold hover:bg-red-500 px-4 py-2 rounded-lg"
                   onClick={() => setShowLogoutModal(true)}
                 >
                   Log Out
@@ -127,14 +127,14 @@ const Navbar = () => {
                 <NavLink to="/home" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-100 rounded-md transition-all">
                   Home
                 </NavLink>
-                <NavLink to="/add-product" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-purple-600tion-all">
+                <NavLink to="/add-product" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-purpl-600 rounded-md transition-all">
                   Add Product
                 </NavLink>
                 <NavLink to="/product-details" className="text-gray-700 text-lg font-semibold px-4 py-2 hover:bg-gray-100 rounded-md transition-all">
                   View Products
                 </NavLink>
                 <button
-                  className="hover:text-white shadow-xl font-bold hover:bg-purple-600 px-4 py-2 rounded-lg"
+                  className="hover:text-white shadow-xl font-bold hover:bg-red-600 px-4 py-2 rounded-lg"
                   onClick={() => setShowLogoutModal(true)}
                 >
                   Log Out

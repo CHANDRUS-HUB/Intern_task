@@ -4,6 +4,7 @@ import axios from "axios";
 import { addProduct } from "../api/productApi";
 import { baseurl } from "../URL/url";
 import Addimg from "../assets/addproduct .png";
+import 'react-toastify/dist/ReactToastify.css'
 
 const AddProduct = () => {
   const [product, setProduct] = useState({
@@ -41,8 +42,7 @@ const AddProduct = () => {
       category: selectedCategoryId,
       name: "",
       new_stock: "",
-      unit: "",
-      // consumed: "",
+      unit: ""
     });
     setProducts([]);
     setUnits([]);
@@ -88,6 +88,10 @@ const AddProduct = () => {
       toast.error("Please enter a valid number.");
       return;
     }
+    if (parseFloat(value) > 1000) {
+      toast.error("New stock quantity cannot be more than 1000.");
+      return;
+  }
     setProduct((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -128,8 +132,8 @@ const handleSubmit = async (e) => {
   try {
     const response = await addProduct(productData);
 
-    
-    toast.success("Product added successfully!");
+    console.log("Product added:", response);
+    toast.success(response.data?.message || "Product added successfully!");
 
     setProduct({
       name: "",
@@ -145,24 +149,22 @@ const handleSubmit = async (e) => {
     console.error("API Error:", error);
 
    
-    if (error.error === "Product already exists!") {
-      toast.error("Product already exists!");
-    } 
+    const errorMessage = 
+        error.response?.data?.error ||      
+        error.response?.data?.message ||    
+        error.message ||                    
+        "An unexpected error occurred";    
+
    
-    else if (error.error && error.error.includes("Unit")) {
-      toast.error(error.error);
-    } 
-   
-    else {
-      toast.error("Error adding product. Please try again.");
+    if (errorMessage === "Product already exists!") {
+        toast.error("Product already exists!");
+    } else if (errorMessage.includes("Unit")) {
+        toast.error(errorMessage);
+    } else {
+        toast.error(errorMessage);
     }
-  } finally {
-    setLoading(false);
-  }
+}
 };
-
-
-
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gray-100">
